@@ -117,7 +117,7 @@ bun run test
 
 1. **Push to main branch** triggers automatic GitHub Actions workflow
 2. **Build process** runs `bun run build` with type checking
-3. **Deployment** to GitHub Pages at depatrack.com
+3. **Deployment** to GitHub Pages at depatrack.leynier.dev
 4. **Domain configuration** handled via CNAME file
 
 The deployment is fully automated and requires no manual intervention.
