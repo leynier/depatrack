@@ -1,0 +1,57 @@
+# Ruler Configuration for DepaTrack
+# AI coding assistant instructions management
+
+# Default agents to run when --agents is not specified
+default_agents = [
+    "cursor",
+    "claude",
+    "copilot",
+    "aider",
+    "windsurf",
+    "gemini-cli",
+    "firebase",
+    "jules",
+    "open-hands",
+]
+
+# --- Global MCP Server Configuration ---
+[mcp]
+enabled = true
+merge_strategy = "merge"
+
+# --- Global .gitignore Configuration ---
+[gitignore]
+enabled = true
+
+# --- Agent-Specific Configurations ---
+[agents.cursor]
+enabled = true
+
+[agents.claude]
+enabled = true
+output_path = "CLAUDE.md"
+
+[agents.copilot]
+enabled = true
+output_path = ".github/copilot-instructions.md"
+
+[agents.aider]
+enabled = true
+
+[agents.cline]
+enabled = true
+
+[agents.windsurf]
+enabled = true
+
+[agents.gemini-cli]
+enabled = true
+
+[agents.firebase]
+enabled = true
+
+[agents.jules]
+enabled = true
+
+[agents.open-hands]
+enabled = true

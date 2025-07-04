@@ -1,0 +1,95 @@
+version: 2
+updates:
+  # Enable version updates for npm (JavaScript/TypeScript dependencies)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "leynier"
+    assignees:
+      - "leynier"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    # Group updates for better PR management
+    groups:
+      vue-ecosystem:
+        patterns:
+          - "vue*"
+          - "@vue/*"
+          - "@vitejs/*"
+          - "vite*"
+      typescript-tooling:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "@tsconfig/*"
+          - "vue-tsc"
+      tailwind-ui:
+        patterns:
+          - "tailwind*"
+          - "@tailwindcss/*"
+          - "shadcn-vue"
+          - "reka-ui"
+          - "class-variance-authority"
+          - "clsx"
+          - "tailwind-merge"
+          - "tailwindcss-animate"
+      build-tools:
+        patterns:
+          - "vite*"
+          - "postcss*"
+          - "autoprefixer"
+          - "npm-run-all2"
+      icons-ui:
+        patterns:
+          - "@heroicons/*"
+          - "@headlessui/*"
+          - "lucide-vue-next"
+    # Auto-merge minor and patch updates for trusted packages
+    auto-merge:
+      - dependency-type: "direct:production"
+        update-type: "semver:patch"
+      - dependency-type: "direct:development"  
+        update-type: "semver:patch"
+      - dependency-type: "direct:production"
+        update-type: "semver:minor"
+      - dependency-type: "direct:development"
+        update-type: "semver:minor"
+    # Ignore specific packages if needed
+    ignore:
+      # Ignore major version updates for stable packages
+      - dependency-name: "vue"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "leynier"
+    assignees:
+      - "leynier"
+    labels:
+      - "github-actions"
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "ci"
+      include: "scope"

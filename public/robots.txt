@@ -1,0 +1,18 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://depatrack.com/sitemap.xml
+
+# Crawl-delay for polite crawlers
+Crawl-delay: 1
+
+# Block common bot paths that aren't needed
+Disallow: /api/
+Disallow: /.well-known/
+Disallow: /assets/
+
+# Allow important files
+Allow: /favicon.ico
+Allow: /manifest.json
