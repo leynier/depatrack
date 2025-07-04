@@ -25,6 +25,7 @@ export interface Property {
   location?: string;
   whatsapp?: string;
   appointmentDate?: Date;
+  isCalendarScheduled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +40,7 @@ export interface PropertyFormData {
   location?: string;
   whatsapp?: string;
   appointmentDate?: Date | null;
+  isCalendarScheduled?: boolean;
 }
 
 export interface PropertyFilters {

@@ -4,8 +4,10 @@ import { formatCurrency } from '@/utils/currency';
 import { PROPERTY_STATUS_LABELS, PROPERTY_STATUS_COLORS, type Property } from '@/types/property';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline';
+import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, ChevronDownIcon, ChevronUpIcon, CalendarIcon } from '@heroicons/vue/24/outline';
 import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/solid';
+import { openGoogleCalendar } from '@/utils/calendar';
+import { usePropertiesStore } from '@/stores/properties';
 
 interface Props {
   property: Property;
@@ -15,8 +17,10 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   edit: [id: string];
   delete: [property: Property];
+  calendarScheduled: [property: Property];
 }>();
 
+const propertiesStore = usePropertiesStore();
 const isExpanded = ref(false);
 
 function handleEdit() {
@@ -74,6 +78,42 @@ function formatDate(date: Date | string | null | undefined): string {
     hour12: true
   }).format(dateObj);
 }
+
+function handleCalendarSchedule() {
+  try {
+    openGoogleCalendar(props.property);
+    // Don't automatically mark as scheduled - let user do it manually
+  } catch (error) {
+    console.error('Error opening Google Calendar:', error);
+  }
+}
+
+function toggleCalendarStatus() {
+  try {
+    if (props.property.isCalendarScheduled) {
+      // Unmark as scheduled
+      const formData = {
+        zone: props.property.zone,
+        price: props.property.price,
+        status: props.property.status,
+        requirements: props.property.requirements,
+        comments: props.property.comments,
+        link: props.property.link,
+        location: props.property.location,
+        whatsapp: props.property.whatsapp,
+        appointmentDate: props.property.appointmentDate,
+        isCalendarScheduled: false
+      };
+      propertiesStore.updateProperty(props.property.id, formData);
+    } else {
+      // Mark as scheduled
+      propertiesStore.markCalendarScheduled(props.property.id);
+    }
+    emit('calendarScheduled', props.property);
+  } catch (error) {
+    console.error('Error updating calendar status:', error);
+  }
+}
 </script>
 
 <template>
@@ -105,7 +145,30 @@ function formatDate(date: Date | string | null | undefined): string {
       <!-- Appointment -->
       <div v-if="property.appointmentDate">
         <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Appointment</h4>
-        <p class="text-sm text-foreground">{{ formatDate(property.appointmentDate) }}</p>
+        <div class="flex items-center justify-between">
+          <p class="text-sm text-foreground">{{ formatDate(property.appointmentDate) }}</p>
+          <div class="flex gap-1 ml-2">
+            <Button
+              variant="outline"
+              size="sm"
+              @click="() => handleCalendarSchedule()"
+              title="Open Google Calendar"
+              class="text-xs px-2 py-1 h-6"
+            >
+              <CalendarIcon class="h-3 w-3" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              @click="() => toggleCalendarStatus()"
+              :class="property.isCalendarScheduled ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-900 dark:border-green-700 dark:text-green-100' : ''"
+              :title="property.isCalendarScheduled ? 'Mark as not scheduled' : 'Mark as scheduled'"
+              class="text-xs px-1 py-1 h-6 w-6"
+            >
+              {{ property.isCalendarScheduled ? '✓' : '○' }}
+            </Button>
+          </div>
+        </div>
       </div>
 
       <!-- Requirements -->

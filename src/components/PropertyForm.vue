@@ -36,7 +36,8 @@ const formData = ref<PropertyFormData>({
   link: '',
   location: '',
   whatsapp: '',
-  appointmentDate: null
+  appointmentDate: null,
+  isCalendarScheduled: false
 });
 
 const newRequirement = ref('');
@@ -90,7 +91,8 @@ function resetForm() {
     link: '',
     location: '',
     whatsapp: '',
-    appointmentDate: null
+    appointmentDate: null,
+    isCalendarScheduled: false
   };
   errors.value = {};
   newRequirement.value = '';
@@ -109,7 +111,8 @@ function loadPropertyData() {
         link: property.link || '',
         location: property.location || '',
         whatsapp: property.whatsapp || '',
-        appointmentDate: property.appointmentDate || null
+        appointmentDate: property.appointmentDate || null,
+        isCalendarScheduled: property.isCalendarScheduled || false
       };
     }
   } else {

@@ -111,6 +111,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       location: formData.location || '',
       whatsapp: formData.whatsapp || '',
       appointmentDate: formData.appointmentDate || undefined,
+      isCalendarScheduled: formData.isCalendarScheduled || false,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -143,6 +144,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       location: formData.location || '',
       whatsapp: formData.whatsapp || '',
       appointmentDate: formData.appointmentDate || undefined,
+      isCalendarScheduled: formData.isCalendarScheduled || false,
       updatedAt: new Date()
     };
 
@@ -225,6 +227,31 @@ export const usePropertiesStore = defineStore('properties', () => {
     return hasActiveFilters.value ? filteredProperties.value : properties.value;
   }
 
+  function markCalendarScheduled(id: string): void {
+    try {
+      const property = properties.value.find(p => p.id === id);
+      if (!property) {
+        throw new Error('Property not found');
+      }
+
+      const updatedProperty: Property = {
+        ...property,
+        isCalendarScheduled: true,
+        updatedAt: new Date()
+      };
+
+      storageService.saveProperty(updatedProperty);
+      const index = properties.value.findIndex(p => p.id === id);
+      if (index >= 0) {
+        properties.value[index] = updatedProperty;
+      }
+      error.value = null;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to mark calendar as scheduled';
+      throw err;
+    }
+  }
+
   return {
     properties: filteredProperties,
     allProperties: properties,
@@ -243,6 +270,7 @@ export const usePropertiesStore = defineStore('properties', () => {
     clearSearch,
     importProperties,
     addProperties,
-    exportProperties
+    exportProperties,
+    markCalendarScheduled
   };
 });
