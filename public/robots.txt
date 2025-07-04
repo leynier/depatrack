@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://depatrack.com/sitemap.xml
+Sitemap: https://leynier.github.io/depatrack/sitemap.xml
 
 # Crawl-delay for polite crawlers
 Crawl-delay: 1
