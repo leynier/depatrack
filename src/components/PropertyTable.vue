@@ -6,7 +6,7 @@ import { PROPERTY_STATUS_LABELS, PROPERTY_STATUS_COLORS, type Property } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PencilIcon, TrashIcon, GlobeAltIcon } from '@heroicons/vue/24/outline';
+import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon } from '@heroicons/vue/24/outline';
 import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/solid';
 import PropertyCard from '@/components/PropertyCard.vue';
 
@@ -31,6 +31,12 @@ function handleDelete(property: Property) {
 }
 
 function openLink(url: string) {
+  if (url) {
+    window.open(url, '_blank');
+  }
+}
+
+function openLocation(url: string) {
   if (url) {
     window.open(url, '_blank');
   }
@@ -150,6 +156,16 @@ function formatDate(date: Date | string | null | undefined): string {
                 class="h-8 w-8 border-border hover:bg-muted"
               >
                 <GlobeAltIcon class="h-4 w-4" />
+              </Button>
+              <Button
+                v-if="property.location"
+                variant="outline"
+                size="icon"
+                @click="openLocation(property.location)"
+                title="Open location"
+                class="h-8 w-8 border-border hover:bg-muted"
+              >
+                <MapPinIcon class="h-4 w-4" />
               </Button>
               <Button
                 v-if="property.whatsapp"

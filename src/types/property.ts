@@ -22,6 +22,7 @@ export interface Property {
   requirements?: string[];
   comments?: string;
   link?: string;
+  location?: string;
   whatsapp?: string;
   appointmentDate?: Date;
   createdAt: Date;
@@ -35,6 +36,7 @@ export interface PropertyFormData {
   requirements?: string[];
   comments?: string;
   link?: string;
+  location?: string;
   whatsapp?: string;
   appointmentDate?: Date | null;
 }

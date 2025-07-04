@@ -23,6 +23,7 @@ export const usePropertiesStore = defineStore('properties', () => {
         property.price.toString().includes(searchTerm) ||
         property.status.toLowerCase().includes(searchTerm) ||
         property.link?.toLowerCase().includes(searchTerm) ||
+        property.location?.toLowerCase().includes(searchTerm) ||
         property.whatsapp?.toLowerCase().includes(searchTerm)
       );
     }
@@ -107,6 +108,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       requirements: formData.requirements || [],
       comments: formData.comments || '',
       link: formData.link || '',
+      location: formData.location || '',
       whatsapp: formData.whatsapp || '',
       appointmentDate: formData.appointmentDate || undefined,
       createdAt: new Date(),
@@ -138,6 +140,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       requirements: formData.requirements || [],
       comments: formData.comments || '',
       link: formData.link || '',
+      location: formData.location || '',
       whatsapp: formData.whatsapp || '',
       appointmentDate: formData.appointmentDate || undefined,
       updatedAt: new Date()

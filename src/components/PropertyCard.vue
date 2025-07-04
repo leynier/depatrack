@@ -4,7 +4,7 @@ import { formatCurrency } from '@/utils/currency';
 import { PROPERTY_STATUS_LABELS, PROPERTY_STATUS_COLORS, type Property } from '@/types/property';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PencilIcon, TrashIcon, GlobeAltIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline';
+import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/outline';
 import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/solid';
 
 interface Props {
@@ -28,6 +28,12 @@ function handleDelete() {
 }
 
 function openLink(url: string) {
+  if (url) {
+    window.open(url, '_blank');
+  }
+}
+
+function openLocation(url: string) {
   if (url) {
     window.open(url, '_blank');
   }
@@ -119,7 +125,7 @@ function formatDate(date: Date | string | null | undefined): string {
       </div>
 
       <!-- Links -->
-      <div v-if="property.link || property.whatsapp" class="flex gap-2">
+      <div v-if="property.link || property.location || property.whatsapp" class="flex gap-2">
         <Button
           v-if="property.link"
           variant="outline"
@@ -129,6 +135,16 @@ function formatDate(date: Date | string | null | undefined): string {
         >
           <GlobeAltIcon class="h-3 w-3 mr-1" />
           Link
+        </Button>
+        <Button
+          v-if="property.location"
+          variant="outline"
+          size="sm"
+          @click="openLocation(property.location)"
+          class="flex-1 text-xs"
+        >
+          <MapPinIcon class="h-3 w-3 mr-1" />
+          Location
         </Button>
         <Button
           v-if="property.whatsapp"

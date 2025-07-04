@@ -10,6 +10,7 @@ export function exportToCSV(properties: Property[]): string {
     'Requirements',
     'Comments',
     'Link',
+    'Location',
     'WhatsApp',
     'Created At',
     'Updated At'
@@ -23,6 +24,7 @@ export function exportToCSV(properties: Property[]): string {
     Array.isArray(property.requirements) ? property.requirements.join('; ') : (property.requirements || ''),
     property.comments || '',
     property.link || '',
+    property.location || '',
     property.whatsapp || '',
     property.createdAt.toISOString(),
     property.updatedAt.toISOString()
@@ -141,6 +143,7 @@ function parsePropertyFromCSV(headers: string[], values: string[]): Property | n
     requirements: getField('requirements') ? getField('requirements').split(';').map(req => req.trim()).filter(req => req.length > 0) : [],
     comments: getField('comments'),
     link: getField('link'),
+    location: getField('location'),
     whatsapp: getField('whatsapp'),
     createdAt: parseDate(getField('created')) || now,
     updatedAt: parseDate(getField('updated')) || now

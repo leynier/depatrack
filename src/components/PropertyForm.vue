@@ -34,6 +34,7 @@ const formData = ref<PropertyFormData>({
   requirements: [],
   comments: '',
   link: '',
+  location: '',
   whatsapp: '',
   appointmentDate: null
 });
@@ -87,6 +88,7 @@ function resetForm() {
     requirements: [],
     comments: '',
     link: '',
+    location: '',
     whatsapp: '',
     appointmentDate: null
   };
@@ -105,6 +107,7 @@ function loadPropertyData() {
         requirements: property.requirements || [],
         comments: property.comments || '',
         link: property.link || '',
+        location: property.location || '',
         whatsapp: property.whatsapp || '',
         appointmentDate: property.appointmentDate || null
       };
@@ -133,6 +136,10 @@ function validateForm(): boolean {
   
   if (formData.value.link && !isValidUrl(formData.value.link)) {
     errors.value.link = 'Please enter a valid URL';
+  }
+  
+  if (formData.value.location && !isValidUrl(formData.value.location)) {
+    errors.value.location = 'Please enter a valid URL';
   }
   
   if (formData.value.whatsapp && !isValidPhoneNumber(formData.value.whatsapp)) {
@@ -357,6 +364,18 @@ function handleClose() {
             />
             <p v-if="errors.whatsapp" class="text-sm text-destructive">{{ errors.whatsapp }}</p>
           </div>
+        </div>
+
+        <div class="space-y-2">
+          <Label for="location">Location</Label>
+          <Input
+            id="location"
+            v-model="formData.location"
+            type="url"
+            placeholder="https://maps.google.com/..."
+            :class="{ 'border-destructive': errors.location }"
+          />
+          <p v-if="errors.location" class="text-sm text-destructive">{{ errors.location }}</p>
         </div>
 
         <DialogFooter>
