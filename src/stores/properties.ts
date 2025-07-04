@@ -51,19 +51,37 @@ export const usePropertiesStore = defineStore('properties', () => {
 
       switch (field) {
         case 'zone':
+          // Empty zones go to the end
+          if (!a.zone && !b.zone) return 0;
+          if (!a.zone) return 1;
+          if (!b.zone) return -1;
           comparison = a.zone.localeCompare(b.zone);
           break;
         case 'price':
-          comparison = a.price - b.price;
+          // Zero or null prices go to the end
+          const priceA = a.price || 0;
+          const priceB = b.price || 0;
+          if (priceA === 0 && priceB === 0) return 0;
+          if (priceA === 0) return 1;
+          if (priceB === 0) return -1;
+          comparison = priceA - priceB;
           break;
         case 'status':
+          // Empty status go to the end
+          if (!a.status && !b.status) return 0;
+          if (!a.status) return 1;
+          if (!b.status) return -1;
           const statusA = PROPERTY_STATUS_LABELS[a.status];
           const statusB = PROPERTY_STATUS_LABELS[b.status];
           comparison = statusA.localeCompare(statusB);
           break;
         case 'appointmentDate':
-          const dateA = a.appointmentDate ? new Date(a.appointmentDate).getTime() : 0;
-          const dateB = b.appointmentDate ? new Date(b.appointmentDate).getTime() : 0;
+          // Null dates go to the end
+          if (!a.appointmentDate && !b.appointmentDate) return 0;
+          if (!a.appointmentDate) return 1;
+          if (!b.appointmentDate) return -1;
+          const dateA = new Date(a.appointmentDate).getTime();
+          const dateB = new Date(b.appointmentDate).getTime();
           comparison = dateA - dateB;
           break;
         default:
