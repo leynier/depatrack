@@ -18,7 +18,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       const searchTerm = filters.value.search.toLowerCase();
       filtered = filtered.filter(property => 
         property.zone.toLowerCase().includes(searchTerm) ||
-        property.requirements?.toLowerCase().includes(searchTerm) ||
+        property.requirements?.some(req => req.toLowerCase().includes(searchTerm)) ||
         property.comments?.toLowerCase().includes(searchTerm) ||
         property.price.toString().includes(searchTerm) ||
         property.status.toLowerCase().includes(searchTerm) ||
@@ -90,7 +90,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       zone: formData.zone,
       price: formData.price || 0,
       status: formData.status,
-      requirements: formData.requirements || '',
+      requirements: formData.requirements || [],
       comments: formData.comments || '',
       link: formData.link || '',
       whatsapp: formData.whatsapp || '',
@@ -121,7 +121,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       zone: formData.zone,
       price: formData.price || 0,
       status: formData.status,
-      requirements: formData.requirements || '',
+      requirements: formData.requirements || [],
       comments: formData.comments || '',
       link: formData.link || '',
       whatsapp: formData.whatsapp || '',

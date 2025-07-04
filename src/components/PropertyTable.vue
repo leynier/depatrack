@@ -118,11 +118,12 @@ function formatDate(date: Date | string | null | undefined): string {
           
           <TableCell class="py-4 px-6 max-w-[250px]">
             <div
-              v-if="property.requirements"
-              class="text-sm text-foreground truncate"
-              :title="property.requirements"
+              v-if="property.requirements && property.requirements.length > 0"
+              class="text-sm text-foreground"
             >
-              {{ truncateText(property.requirements, 40) }}
+              <div v-for="(requirement, index) in property.requirements" :key="index" class="truncate" :title="requirement">
+                • {{ truncateText(requirement, 35) }}
+              </div>
             </div>
             <div v-else class="text-sm text-muted-foreground">-</div>
           </TableCell>

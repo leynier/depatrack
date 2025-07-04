@@ -42,6 +42,14 @@ export class StorageService {
           if (property.updatedAt && typeof property.updatedAt === 'string') {
             property.updatedAt = new Date(property.updatedAt);
           }
+          // Migrate requirements from string to array
+          if (property.requirements && typeof property.requirements === 'string') {
+            property.requirements = property.requirements.trim() ? [property.requirements.trim()] : [];
+          }
+          // Ensure requirements is an array
+          if (!Array.isArray(property.requirements)) {
+            property.requirements = [];
+          }
         });
         this.saveData(properties);
       }
@@ -79,7 +87,8 @@ export class StorageService {
       return data.map(property => ({
         ...property,
         createdAt: new Date(property.createdAt),
-        updatedAt: new Date(property.updatedAt)
+        updatedAt: new Date(property.updatedAt),
+        requirements: Array.isArray(property.requirements) ? property.requirements : []
       }));
     } catch (error) {
       console.error('Error loading properties:', error);

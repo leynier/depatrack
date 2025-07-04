@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { XMarkIcon } from '@heroicons/vue/24/outline';
+import { XMarkIcon, PlusIcon } from '@heroicons/vue/24/outline';
 
 interface Props {
   propertyId?: string | null;
@@ -31,12 +31,14 @@ const formData = ref<PropertyFormData>({
   zone: '',
   price: null,
   status: 'available',
-  requirements: '',
+  requirements: [],
   comments: '',
   link: '',
   whatsapp: '',
   appointmentDate: null
 });
+
+const newRequirement = ref('');
 
 const priceInput = computed({
   get: () => formData.value.price?.toString() ?? '',
@@ -82,13 +84,14 @@ function resetForm() {
     zone: '',
     price: null,
     status: 'available',
-    requirements: '',
+    requirements: [],
     comments: '',
     link: '',
     whatsapp: '',
     appointmentDate: null
   };
   errors.value = {};
+  newRequirement.value = '';
 }
 
 function loadPropertyData() {
@@ -99,7 +102,7 @@ function loadPropertyData() {
         zone: property.zone,
         price: property.price,
         status: property.status,
-        requirements: property.requirements || '',
+        requirements: property.requirements || [],
         comments: property.comments || '',
         link: property.link || '',
         whatsapp: property.whatsapp || '',
@@ -154,11 +157,46 @@ function isValidPhoneNumber(phone: string): boolean {
   return phoneRegex.test(phone) && phone.replace(/\D/g, '').length >= 10;
 }
 
+function addRequirement() {
+  if (newRequirement.value.trim()) {
+    formData.value.requirements = formData.value.requirements || [];
+    formData.value.requirements.push(newRequirement.value.trim());
+    newRequirement.value = '';
+  }
+}
+
+function addEmptyRequirement() {
+  formData.value.requirements = formData.value.requirements || [];
+  formData.value.requirements.push('');
+}
+
+function removeRequirement(index: number) {
+  if (formData.value.requirements) {
+    formData.value.requirements.splice(index, 1);
+    // Clean up empty requirements at the end
+    while (formData.value.requirements.length > 0 && 
+           formData.value.requirements[formData.value.requirements.length - 1].trim() === '') {
+      formData.value.requirements.pop();
+    }
+  }
+}
+
+function updateRequirement(index: number, value: string) {
+  if (formData.value.requirements) {
+    formData.value.requirements[index] = value;
+  }
+}
+
 async function handleSubmit() {
   if (!validateForm()) return;
   
   try {
     isSubmitting.value = true;
+    
+    // Clean up empty requirements before saving
+    if (formData.value.requirements) {
+      formData.value.requirements = formData.value.requirements.filter(req => req.trim() !== '');
+    }
     
     if (isEditing.value && props.propertyId) {
       propertiesStore.updateProperty(props.propertyId, formData.value);
@@ -251,13 +289,38 @@ function handleClose() {
         </div>
 
         <div class="space-y-2">
-          <Label for="requirements">Requirements</Label>
-          <Textarea
-            id="requirements"
-            v-model="formData.requirements"
-            placeholder="Enter requirements or conditions"
-            class="min-h-[80px]"
-          />
+          <Label>Requirements</Label>
+          <div class="space-y-2">
+            <!-- Existing requirements -->
+            <div v-for="(requirement, index) in formData.requirements || []" :key="index" class="flex gap-2">
+              <Input
+                v-model="formData.requirements![index]"
+                placeholder="Enter requirement"
+                class="flex-1"
+                @input="updateRequirement(index, ($event.target as HTMLInputElement).value)"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                @click="removeRequirement(index)"
+                class="h-10 w-10"
+              >
+                <XMarkIcon class="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <!-- Add new requirement button -->
+            <Button
+              type="button"
+              variant="outline"
+              @click="addEmptyRequirement"
+              class="w-full h-10 border-dashed"
+            >
+              <PlusIcon class="h-4 w-4 mr-2" />
+              Add requirement
+            </Button>
+          </div>
         </div>
 
         <div class="space-y-2">

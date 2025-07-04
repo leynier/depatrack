@@ -103,9 +103,13 @@ function formatDate(date: Date | string | null | undefined): string {
       </div>
 
       <!-- Requirements -->
-      <div v-if="property.requirements">
+      <div v-if="property.requirements && property.requirements.length > 0">
         <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Requirements</h4>
-        <p class="text-sm text-foreground">{{ property.requirements }}</p>
+        <div class="space-y-1">
+          <div v-for="(requirement, index) in property.requirements" :key="index" class="text-sm text-foreground">
+            • {{ requirement }}
+          </div>
+        </div>
       </div>
 
       <!-- Comments -->

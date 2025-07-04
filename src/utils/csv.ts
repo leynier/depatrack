@@ -20,7 +20,7 @@ export function exportToCSV(properties: Property[]): string {
     property.zone,
     property.price.toString(),
     PROPERTY_STATUS_LABELS[property.status],
-    property.requirements || '',
+    Array.isArray(property.requirements) ? property.requirements.join('; ') : (property.requirements || ''),
     property.comments || '',
     property.link || '',
     property.whatsapp || '',
@@ -30,7 +30,7 @@ export function exportToCSV(properties: Property[]): string {
 
   const csvContent = [
     headers.join(','),
-    ...rows.map(row => row.map(field => `"${field.replace(/"/g, '""')}"`).join(','))
+    ...rows.map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
   ].join('\n');
 
   return csvContent;
@@ -138,7 +138,7 @@ function parsePropertyFromCSV(headers: string[], values: string[]): Property | n
     zone,
     price,
     status,
-    requirements: getField('requirements'),
+    requirements: getField('requirements') ? getField('requirements').split(';').map(req => req.trim()).filter(req => req.length > 0) : [],
     comments: getField('comments'),
     link: getField('link'),
     whatsapp: getField('whatsapp'),

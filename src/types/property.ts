@@ -11,7 +11,7 @@ export interface Property {
   zone: string;
   price: number;
   status: PropertyStatus;
-  requirements?: string;
+  requirements?: string[];
   comments?: string;
   link?: string;
   whatsapp?: string;
@@ -24,7 +24,7 @@ export interface PropertyFormData {
   zone: string;
   price: number | null;
   status: PropertyStatus;
-  requirements?: string;
+  requirements?: string[];
   comments?: string;
   link?: string;
   whatsapp?: string;
