@@ -42,6 +42,9 @@ export class StorageService {
           if (property.updatedAt && typeof property.updatedAt === 'string') {
             property.updatedAt = new Date(property.updatedAt);
           }
+          if (property.appointmentDate && typeof property.appointmentDate === 'string') {
+            property.appointmentDate = new Date(property.appointmentDate);
+          }
           // Migrate requirements from string to array
           if (property.requirements && typeof property.requirements === 'string') {
             property.requirements = property.requirements.trim() ? [property.requirements.trim()] : [];
@@ -88,6 +91,7 @@ export class StorageService {
         ...property,
         createdAt: new Date(property.createdAt),
         updatedAt: new Date(property.updatedAt),
+        appointmentDate: property.appointmentDate ? new Date(property.appointmentDate) : undefined,
         requirements: Array.isArray(property.requirements) ? property.requirements : []
       }));
     } catch (error) {
