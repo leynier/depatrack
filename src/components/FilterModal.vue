@@ -98,7 +98,7 @@ function isStatusSelected(status: PropertyStatus) {
 
 <template>
   <Dialog :open="open" @update:open="handleClose">
-    <DialogContent class="sm:max-w-lg">
+    <DialogContent class="sm:max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
       <DialogHeader>
         <DialogTitle>Configure Filters</DialogTitle>
         <DialogDescription>

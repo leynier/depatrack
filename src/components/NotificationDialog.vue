@@ -47,7 +47,7 @@ function handleCancel() {
 
 <template>
   <Dialog :open="open" @update:open="handleClose">
-    <DialogContent class="sm:max-w-md">
+    <DialogContent class="sm:max-w-md max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
       <DialogHeader>
         <DialogTitle>{{ title }}</DialogTitle>
         <DialogDescription>

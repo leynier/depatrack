@@ -220,7 +220,7 @@ function handleClose() {
 
 <template>
   <Dialog :open="open" @update:open="handleClose">
-    <DialogContent class="sm:max-w-2xl">
+    <DialogContent class="sm:max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
       <DialogHeader>
         <DialogTitle>{{ modalTitle }}</DialogTitle>
         <DialogDescription>
