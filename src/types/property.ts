@@ -50,6 +50,14 @@ export interface PropertyFilters {
   statuses?: PropertyStatus[];
 }
 
+export type SortField = 'zone' | 'price' | 'status' | 'appointmentDate';
+export type SortDirection = 'asc' | 'desc';
+
+export interface PropertySort {
+  field: SortField;
+  direction: SortDirection;
+}
+
 export interface PropertyStats {
   total: number;
   available: number;

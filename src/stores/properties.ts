@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Property, PropertyFormData, PropertyFilters, PropertyStats } from '@/types/property';
+import type { Property, PropertyFormData, PropertyFilters, PropertyStats, PropertySort, SortField, SortDirection } from '@/types/property';
+import { PROPERTY_STATUS_LABELS } from '@/types/property';
 import { StorageService } from '@/services/storage';
 
 export const usePropertiesStore = defineStore('properties', () => {
   const properties = ref<Property[]>([]);
   const filters = ref<PropertyFilters>({});
+  const sort = ref<PropertySort>({ field: 'zone', direction: 'asc' });
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
@@ -42,7 +44,34 @@ export const usePropertiesStore = defineStore('properties', () => {
       );
     }
 
-    return filtered.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      const { field, direction } = sort.value;
+      let comparison = 0;
+
+      switch (field) {
+        case 'zone':
+          comparison = a.zone.localeCompare(b.zone);
+          break;
+        case 'price':
+          comparison = a.price - b.price;
+          break;
+        case 'status':
+          const statusA = PROPERTY_STATUS_LABELS[a.status];
+          const statusB = PROPERTY_STATUS_LABELS[b.status];
+          comparison = statusA.localeCompare(statusB);
+          break;
+        case 'appointmentDate':
+          const dateA = a.appointmentDate ? new Date(a.appointmentDate).getTime() : 0;
+          const dateB = b.appointmentDate ? new Date(b.appointmentDate).getTime() : 0;
+          comparison = dateA - dateB;
+          break;
+        default:
+          comparison = 0;
+      }
+
+      return direction === 'desc' ? -comparison : comparison;
+    });
   });
 
   const stats = computed((): PropertyStats => {
@@ -252,10 +281,25 @@ export const usePropertiesStore = defineStore('properties', () => {
     }
   }
 
+  function setSortField(field: SortField): void {
+    if (sort.value.field === field) {
+      // Toggle direction if same field
+      sort.value.direction = sort.value.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Set new field with ascending direction
+      sort.value = { field, direction: 'asc' };
+    }
+  }
+
+  function setSortDirection(direction: SortDirection): void {
+    sort.value.direction = direction;
+  }
+
   return {
     properties: filteredProperties,
     allProperties: properties,
     filters,
+    sort,
     isLoading,
     error,
     stats,
@@ -271,6 +315,8 @@ export const usePropertiesStore = defineStore('properties', () => {
     importProperties,
     addProperties,
     exportProperties,
-    markCalendarScheduled
+    markCalendarScheduled,
+    setSortField,
+    setSortDirection
   };
 });

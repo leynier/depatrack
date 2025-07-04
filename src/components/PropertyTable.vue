@@ -6,10 +6,11 @@ import { PROPERTY_STATUS_LABELS, PROPERTY_STATUS_COLORS, type Property } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, CalendarIcon } from '@heroicons/vue/24/outline';
+import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, CalendarIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
 import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/solid';
 import PropertyCard from '@/components/PropertyCard.vue';
 import { openGoogleCalendar } from '@/utils/calendar';
+import type { SortField } from '@/types/property';
 
 interface Props {
   properties: Property[];
@@ -117,6 +118,17 @@ function toggleCalendarStatus(property: Property) {
     console.error('Error updating calendar status:', error);
   }
 }
+
+function handleSort(field: SortField) {
+  propertiesStore.setSortField(field);
+}
+
+function getSortIcon(field: SortField) {
+  if (propertiesStore.sort.field !== field) {
+    return null;
+  }
+  return propertiesStore.sort.direction === 'asc' ? ChevronUpIcon : ChevronDownIcon;
+}
 </script>
 
 <template>
@@ -125,10 +137,42 @@ function toggleCalendarStatus(property: Property) {
     <Table>
       <TableHeader class="bg-background">
         <TableRow class="border-b border-border">
-          <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-32 px-6 text-muted-foreground">Zone</TableHead>
-          <TableHead class="text-right text-xs font-medium uppercase tracking-wider w-28 px-6 text-muted-foreground">Price</TableHead>
-          <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-24 px-6 text-muted-foreground">Status</TableHead>
-          <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">Appointment</TableHead>
+          <TableHead class="w-32 px-6">
+            <button 
+              @click="handleSort('zone')"
+              class="flex items-center gap-1 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Zone
+              <component :is="getSortIcon('zone')" v-if="getSortIcon('zone')" class="h-3 w-3" />
+            </button>
+          </TableHead>
+          <TableHead class="w-28 px-6">
+            <button 
+              @click="handleSort('price')"
+              class="flex items-center gap-1 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors w-full justify-end"
+            >
+              Price
+              <component :is="getSortIcon('price')" v-if="getSortIcon('price')" class="h-3 w-3" />
+            </button>
+          </TableHead>
+          <TableHead class="w-24 px-6">
+            <button 
+              @click="handleSort('status')"
+              class="flex items-center gap-1 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors w-full justify-center"
+            >
+              Status
+              <component :is="getSortIcon('status')" v-if="getSortIcon('status')" class="h-3 w-3" />
+            </button>
+          </TableHead>
+          <TableHead class="w-40 px-6">
+            <button 
+              @click="handleSort('appointmentDate')"
+              class="flex items-center gap-1 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors w-full justify-center"
+            >
+              Appointment
+              <component :is="getSortIcon('appointmentDate')" v-if="getSortIcon('appointmentDate')" class="h-3 w-3" />
+            </button>
+          </TableHead>
           <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">Requirements</TableHead>
           <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">Comments</TableHead>
           <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-20 px-6 text-muted-foreground">Links</TableHead>
