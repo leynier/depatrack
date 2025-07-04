@@ -12,6 +12,7 @@ export function exportToCSV(properties: Property[]): string {
     'Link',
     'Location',
     'WhatsApp',
+    'Appointment Date',
     'Calendar Scheduled',
     'Created At',
     'Updated At'
@@ -27,6 +28,7 @@ export function exportToCSV(properties: Property[]): string {
     property.link || '',
     property.location || '',
     property.whatsapp || '',
+    property.appointmentDate ? property.appointmentDate.toISOString() : '',
     property.isCalendarScheduled ? 'Yes' : 'No',
     property.createdAt.toISOString(),
     property.updatedAt.toISOString()
@@ -147,6 +149,7 @@ function parsePropertyFromCSV(headers: string[], values: string[]): Property | n
     link: getField('link'),
     location: getField('location'),
     whatsapp: getField('whatsapp'),
+    appointmentDate: parseDate(getField('appointment')) || undefined,
     isCalendarScheduled: getField('calendar').toLowerCase() === 'yes',
     createdAt: parseDate(getField('created')) || now,
     updatedAt: parseDate(getField('updated')) || now
