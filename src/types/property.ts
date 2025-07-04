@@ -1,10 +1,18 @@
 export type PropertyStatus = 
   | 'available'
-  | 'in_process'
-  | 'occupied'
+  | 'contacted'
+  | 'scheduled'
+  | 'visited'
+  | 'negotiating'
+  | 'in_queue'
+  | 'evaluating'
+  | 'applying'
   | 'documents_pending'
-  | 'requires_guarantees'
-  | 'not_available';
+  | 'approved'
+  | 'rejected'
+  | 'occupied'
+  | 'over_budget'
+  | 'not_interested';
 
 export interface Property {
   id: string;
@@ -41,25 +49,42 @@ export interface PropertyFilters {
 export interface PropertyStats {
   total: number;
   available: number;
-  inProcess: number;
-  occupied: number;
+  active: number;
+  completed: number;
+  rejected: number;
   averagePrice: number;
 }
 
 export const PROPERTY_STATUS_LABELS: Record<PropertyStatus, string> = {
   available: 'Available',
-  in_process: 'In Process',
-  occupied: 'Occupied',
+  contacted: 'Contacted',
+  scheduled: 'Scheduled',
+  visited: 'Visited',
+  negotiating: 'Negotiating',
+  in_queue: 'In Queue',
+  evaluating: 'Evaluating',
+  applying: 'Applying',
   documents_pending: 'Documents Pending',
-  requires_guarantees: 'Requires Guarantees',
-  not_available: 'Not Available'
+  approved: 'Approved',
+  rejected: 'Rejected',
+  occupied: 'Occupied',
+  over_budget: 'Over Budget',
+  not_interested: 'Not Interested'
 };
 
 export const PROPERTY_STATUS_COLORS: Record<PropertyStatus, string> = {
   available: 'bg-green-100 text-green-800',
-  in_process: 'bg-yellow-100 text-yellow-800',
-  occupied: 'bg-red-100 text-red-800',
+  contacted: 'bg-blue-100 text-blue-800',
+  scheduled: 'bg-purple-100 text-purple-800',
+  visited: 'bg-indigo-100 text-indigo-800',
+  negotiating: 'bg-yellow-100 text-yellow-800',
+  in_queue: 'bg-orange-100 text-orange-800',
+  evaluating: 'bg-teal-100 text-teal-800',
+  applying: 'bg-cyan-100 text-cyan-800',
   documents_pending: 'bg-blue-100 text-blue-800',
-  requires_guarantees: 'bg-purple-100 text-purple-800',
-  not_available: 'bg-gray-100 text-gray-800'
+  approved: 'bg-emerald-100 text-emerald-800',
+  rejected: 'bg-red-100 text-red-800',
+  occupied: 'bg-red-100 text-red-800',
+  over_budget: 'bg-gray-100 text-gray-800',
+  not_interested: 'bg-gray-100 text-gray-800'
 };

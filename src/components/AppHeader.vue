@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useTheme } from '@/composables/useTheme';
 import { Button } from '@/components/ui/button';
-import { SunIcon, MoonIcon } from '@heroicons/vue/24/outline';
+import { SunIcon, MoonIcon, ChartBarIcon } from '@heroicons/vue/24/outline';
+import StatsModal from '@/components/StatsModal.vue';
 
 const { theme, toggleTheme } = useTheme();
+const showStatsModal = ref(false);
 
 const getThemeIcon = () => {
   return theme.value === 'dark' ? SunIcon : MoonIcon;
@@ -15,6 +18,10 @@ const getThemeTitle = () => {
 
 const openGitHub = () => {
   window.open('https://github.com/leynier/depatrack', '_blank');
+};
+
+const openStats = () => {
+  showStatsModal.value = true;
 };
 </script>
 
@@ -29,6 +36,15 @@ const openGitHub = () => {
           </p>
         </div>
         <div class="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            @click="openStats"
+            title="View Statistics"
+            class="border-border hover:bg-muted"
+          >
+            <ChartBarIcon class="h-4 w-4" />
+          </Button>
           <Button
             variant="outline"
             size="icon"
@@ -54,4 +70,10 @@ const openGitHub = () => {
       </div>
     </div>
   </header>
+
+  <!-- Stats Modal -->
+  <StatsModal 
+    v-model:open="showStatsModal" 
+    @close="showStatsModal = false" 
+  />
 </template>

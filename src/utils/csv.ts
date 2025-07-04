@@ -150,11 +150,19 @@ function parsePropertyFromCSV(headers: string[], values: string[]): Property | n
 function mapStatusFromLabel(statusLabel: string): PropertyStatus {
   const statusMap: Record<string, PropertyStatus> = {
     'available': 'available',
-    'in process': 'in_process',
-    'occupied': 'occupied',
+    'contacted': 'contacted',
+    'scheduled': 'scheduled',
+    'visited': 'visited',
+    'negotiating': 'negotiating',
+    'in queue': 'in_queue',
+    'evaluating': 'evaluating',
+    'applying': 'applying',
     'documents pending': 'documents_pending',
-    'requires guarantees': 'requires_guarantees',
-    'not available': 'not_available'
+    'approved': 'approved',
+    'rejected': 'rejected',
+    'occupied': 'occupied',
+    'over budget': 'over_budget',
+    'not interested': 'not_interested'
   };
 
   return statusMap[statusLabel.toLowerCase()] || 'available';

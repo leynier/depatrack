@@ -47,8 +47,21 @@ export const usePropertiesStore = defineStore('properties', () => {
   const stats = computed((): PropertyStats => {
     const total = properties.value.length;
     const available = properties.value.filter(p => p.status === 'available').length;
-    const inProcess = properties.value.filter(p => p.status === 'in_process').length;
-    const occupied = properties.value.filter(p => p.status === 'occupied').length;
+    
+    // Active: Properties I'm currently working on
+    const active = properties.value.filter(p => 
+      ['contacted', 'scheduled', 'visited', 'negotiating', 'in_queue', 'evaluating', 'applying', 'documents_pending'].includes(p.status)
+    ).length;
+    
+    // Completed: Successfully approved or occupied by me
+    const completed = properties.value.filter(p => 
+      ['approved', 'occupied'].includes(p.status)
+    ).length;
+    
+    // Rejected: Didn't work out for various reasons
+    const rejected = properties.value.filter(p => 
+      ['rejected', 'over_budget', 'not_interested'].includes(p.status)
+    ).length;
     
     const averagePrice = total > 0 
       ? properties.value.reduce((sum, p) => sum + p.price, 0) / total 
@@ -57,8 +70,9 @@ export const usePropertiesStore = defineStore('properties', () => {
     return {
       total,
       available,
-      inProcess,
-      occupied,
+      active,
+      completed,
+      rejected,
       averagePrice
     };
   });
