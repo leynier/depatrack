@@ -18,13 +18,13 @@
     "clear": "Clear",
     "export": "Export",
     "import": "Import",
-    "loading": "Loading...",
-    "saving": "Saving...",
+    "loading": "Loading ...",
+    "saving": "Saving ...",
     "confirm": "Confirm",
     "yes": "Yes",
     "no": "No",
     "actions": "Actions",
-    "pleaseWait": "Please wait..."
+    "pleaseWait": "Please wait ..."
   },
   "navigation": {
     "home": "Home",
@@ -66,7 +66,7 @@
     "confirmPassword": "Confirm Password",
     "confirmYourPassword": "Confirm your password",
     "offline": "Offline",
-    "syncing": "Syncing...",
+    "syncing": "Syncing ...",
     "online": "Online",
     "neverSynced": "Never synced",
     "justSynced": "Just synced",
@@ -74,13 +74,13 @@
     "hoursAgo": "{hours} hr ago",
     "daysAgo": "{days} days ago",
     "syncNow": "Sync Now",
-    "signingOut": "Signing out...",
+    "signingOut": "Signing out ...",
     "invalidVerificationLink": "Invalid verification link",
     "expiredVerificationLink": "Verification link has expired. Please request a new one.",
     "invalidVerificationLinkCheckEmail": "Invalid verification link. Please check your email.",
     "accountDisabled": "Your account has been disabled.",
     "verificationFailed": "Verification failed. Please try again.",
-    "verifyingEmail": "Verifying your email...",
+    "verifyingEmail": "Verifying your email ...",
     "verifyingEmailMessage": "Please wait while we verify your email address.",
     "emailVerifiedSuccessfully": "Email Verified Successfully!",
     "emailVerifiedMessage": "Your email has been verified. You can now sign in to DepaTrack and start tracking your property prospects.",
@@ -94,13 +94,13 @@
     "passwordTooShort": "Password must be at least 6 characters",
     "passwordTooWeak": "Password is too weak. Please choose a stronger password.",
     "failedToResetPassword": "Failed to reset password. Please try again.",
-    "verifyingResetLink": "Verifying reset link...",
+    "verifyingResetLink": "Verifying reset link ...",
     "verifyingResetLinkMessage": "Please wait while we verify your password reset link.",
     "enterNewPasswordFor": "Enter your new password for {email}",
     "newPassword": "New Password",
     "enterNewPassword": "Enter new password",
     "confirmNewPassword": "Confirm new password",
-    "resetting": "Resetting...",
+    "resetting": "Resetting ...",
     "passwordResetSuccessful": "Password Reset Successful!",
     "passwordResetSuccessfulMessage": "Your password has been reset successfully. You can now sign in with your new password.",
     "signInToDepaTrack": "Sign In to DepaTrack",
@@ -134,7 +134,7 @@
       "comments": "Enter additional comments or observations",
       "link": "https://example.com/property",
       "whatsapp": "+12345678901",
-      "location": "https://maps.google.com/..."
+      "location": "https://maps.google.com/ ..."
     },
     "openGoogleCalendar": "Open Google Calendar",
     "markAsScheduled": "Mark as scheduled",
@@ -242,8 +242,8 @@
     "selectLanguage": "Select Language"
   },
   "sync": {
-    "processing": "Processing...",
-    "syncing": "Syncing...",
+    "processing": "Processing ...",
+    "syncing": "Syncing ...",
     "synced": "Synced",
     "syncedNow": "Synced now",
     "syncedMinutesAgo": "Synced {minutes}m ago",
@@ -251,7 +251,7 @@
     "syncError": "Sync error"
   },
   "loading": {
-    "loadingProperties": "Loading properties..."
+    "loadingProperties": "Loading properties ..."
   },
   "locale": {
     "dateFormat": "en-US"

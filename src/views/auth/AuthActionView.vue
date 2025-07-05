@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { applyActionCode, verifyPasswordResetCode, confirmPasswordReset, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/config/firebase';
 import { useAuthStore } from '@/stores/auth';
+import { useLanguage } from '@/composables/useLanguage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useLanguage();
 
 const loading = ref(true);
 const mode = ref('');
@@ -27,7 +29,7 @@ onMounted(async () => {
   mode.value = route.query.mode as string;
   
   if (!actionCode || !mode.value) {
-    error.value = 'Invalid action link';
+    error.value = t('auth.invalidVerificationLink');
     step.value = 'error';
     loading.value = false;
     return;
@@ -45,7 +47,7 @@ onMounted(async () => {
         await handleEmailRecovery();
         break;
       default:
-        error.value = 'Unknown action type';
+        error.value = t('auth.invalidVerificationLink');
         step.value = 'error';
     }
   } catch (err: any) {
@@ -73,12 +75,12 @@ const handleEmailRecovery = async () => {
 
 const resetPassword = async () => {
   if (newPassword.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match';
+    error.value = t('auth.passwordsDoNotMatch');
     return;
   }
 
   if (newPassword.value.length < 6) {
-    error.value = 'Password must be at least 6 characters';
+    error.value = t('auth.passwordTooShort');
     return;
   }
 
@@ -103,55 +105,61 @@ const resetPassword = async () => {
 const handleError = (err: any) => {
   switch (err.code) {
     case 'auth/expired-action-code':
-      error.value = 'Action link has expired. Please request a new one.';
+      error.value = mode.value === 'resetPassword' 
+        ? t('auth.expiredPasswordResetLink')
+        : t('auth.expiredVerificationLink');
       break;
     case 'auth/invalid-action-code':
-      error.value = 'Invalid action link. Please check your email.';
+      error.value = mode.value === 'resetPassword'
+        ? t('auth.invalidPasswordResetLinkCheckEmail')
+        : t('auth.invalidVerificationLinkCheckEmail');
       break;
     case 'auth/user-disabled':
-      error.value = 'Your account has been disabled.';
+      error.value = t('auth.accountDisabled');
       break;
     case 'auth/weak-password':
-      error.value = 'Password is too weak. Please choose a stronger password.';
+      error.value = t('auth.passwordTooWeak');
       break;
     default:
-      error.value = 'Action failed. Please try again.';
+      error.value = mode.value === 'resetPassword'
+        ? t('auth.failedToResetPassword')
+        : t('auth.verificationFailed');
   }
   step.value = 'error';
 };
 
 const getTitle = () => {
-  if (loading.value) return 'Processing...';
+  if (loading.value) return t('common.pleaseWait');
   
   switch (mode.value) {
     case 'verifyEmail':
-      return step.value === 'success' ? 'Email Verified Successfully!' : 'Email Verification Failed';
+      return step.value === 'success' ? t('auth.emailVerifiedSuccessfully') : t('auth.verificationFailedTitle');
     case 'resetPassword':
-      if (step.value === 'reset') return 'Reset Password';
-      return step.value === 'success' ? 'Password Reset Successful!' : 'Password Reset Failed';
+      if (step.value === 'reset') return t('auth.resetPassword');
+      return step.value === 'success' ? t('auth.passwordResetSuccessful') : t('auth.resetFailedTitle');
     case 'recoverEmail':
-      return step.value === 'success' ? 'Email Recovered Successfully!' : 'Email Recovery Failed';
+      return step.value === 'success' ? t('auth.emailVerifiedSuccessfully') : t('auth.verificationFailedTitle');
     default:
-      return 'Action Failed';
+      return t('auth.verificationFailedTitle');
   }
 };
 
 const getDescription = () => {
-  if (loading.value) return 'Please wait while we process your request.';
+  if (loading.value) return t('auth.verifyingEmailMessage');
   
   switch (mode.value) {
     case 'verifyEmail':
       return step.value === 'success' 
-        ? 'Your email has been verified successfully! You can now sign in to your DepaTrack account.'
+        ? t('auth.emailVerifiedMessage')
         : error.value;
     case 'resetPassword':
-      if (step.value === 'reset') return `Enter your new password for ${email.value}`;
+      if (step.value === 'reset') return t('auth.enterNewPasswordFor', { email: email.value });
       return step.value === 'success'
-        ? 'Your password has been reset successfully. You are now signed in to DepaTrack.'
+        ? t('auth.passwordResetSuccessfulMessage')
         : error.value;
     case 'recoverEmail':
       return step.value === 'success'
-        ? 'Your email has been recovered successfully.'
+        ? t('auth.emailVerifiedMessage')
         : error.value;
     default:
       return error.value;
@@ -161,13 +169,13 @@ const getDescription = () => {
 const getSuccessAction = () => {
   switch (mode.value) {
     case 'verifyEmail':
-      return 'Sign In to DepaTrack';
+      return t('auth.signInToDepaTrack');
     case 'resetPassword':
-      return auth.currentUser ? 'Continue to DepaTrack' : 'Sign In to DepaTrack';
+      return auth.currentUser ? t('auth.continueToDepaTrack') : t('auth.signInToDepaTrack');
     case 'recoverEmail':
-      return 'Sign In to DepaTrack';
+      return t('auth.signInToDepaTrack');
     default:
-      return 'Back to DepaTrack';
+      return t('auth.backToDepaTrack');
   }
 };
 
@@ -211,24 +219,24 @@ const goToLogin = () => {
 
         <form @submit.prevent="resetPassword" class="space-y-4">
           <div class="space-y-2">
-            <Label for="newPassword">New Password</Label>
+            <Label for="newPassword">{{ t('auth.newPassword') }}</Label>
             <Input
               id="newPassword"
               v-model="newPassword"
               type="password"
-              placeholder="Enter new password"
+              :placeholder="t('auth.enterNewPassword')"
               required
               :disabled="isSubmitting"
             />
           </div>
 
           <div class="space-y-2">
-            <Label for="confirmPassword">Confirm Password</Label>
+            <Label for="confirmPassword">{{ t('auth.confirmPassword') }}</Label>
             <Input
               id="confirmPassword"
               v-model="confirmPassword"
               type="password"
-              placeholder="Confirm new password"
+              :placeholder="t('auth.confirmNewPassword')"
               required
               :disabled="isSubmitting"
             />
@@ -243,7 +251,7 @@ const goToLogin = () => {
             class="w-full"
             :disabled="isSubmitting || !newPassword || !confirmPassword"
           >
-            {{ isSubmitting ? 'Resetting...' : 'Reset Password' }}
+            {{ isSubmitting ? t('auth.resetting') : t('auth.resetPassword') }}
           </Button>
         </form>
       </div>
@@ -280,14 +288,14 @@ const goToLogin = () => {
         </div>
 
         <Button @click="goToLogin" variant="outline" class="w-full">
-          Back to DepaTrack
+          {{ t('auth.backToDepaTrack') }}
         </Button>
       </div>
 
       <!-- DepaTrack Branding -->
       <div class="pt-8 border-t border-border text-center">
-        <h3 class="text-lg font-semibold text-foreground">DepaTrack</h3>
-        <p class="text-sm text-muted-foreground">Property Tracking Made Simple</p>
+        <h3 class="text-lg font-semibold text-foreground">{{ t('app.title') }}</h3>
+        <p class="text-sm text-muted-foreground">{{ t('app.tagline') }}</p>
       </div>
     </div>
   </div>

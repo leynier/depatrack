@@ -18,13 +18,13 @@
     "clear": "Limpiar",
     "export": "Exportar",
     "import": "Importar",
-    "loading": "Cargando...",
-    "saving": "Guardando...",
+    "loading": "Cargando ...",
+    "saving": "Guardando ...",
     "confirm": "Confirmar",
     "yes": "Sí",
     "no": "No",
     "actions": "Acciones",
-    "pleaseWait": "Por favor espera..."
+    "pleaseWait": "Por favor espera ..."
   },
   "navigation": {
     "home": "Inicio",
@@ -66,7 +66,7 @@
     "confirmPassword": "Confirmar Contraseña",
     "confirmYourPassword": "Confirma tu contraseña",
     "offline": "Sin conexión",
-    "syncing": "Sincronizando...",
+    "syncing": "Sincronizando ...",
     "online": "En línea",
     "neverSynced": "Nunca sincronizado",
     "justSynced": "Recién sincronizado",
@@ -74,13 +74,13 @@
     "hoursAgo": "hace {hours} hr",
     "daysAgo": "hace {days} días",
     "syncNow": "Sincronizar ahora",
-    "signingOut": "Cerrando sesión...",
+    "signingOut": "Cerrando sesión ...",
     "invalidVerificationLink": "Enlace de verificación no válido",
     "expiredVerificationLink": "El enlace de verificación ha caducado. Por favor, solicita uno nuevo.",
     "invalidVerificationLinkCheckEmail": "Enlace de verificación no válido. Por favor, revisa tu correo electrónico.",
     "accountDisabled": "Tu cuenta ha sido deshabilitada.",
     "verificationFailed": "Verificación fallida. Por favor, inténtalo de nuevo.",
-    "verifyingEmail": "Verificando tu correo electrónico...",
+    "verifyingEmail": "Verificando tu correo electrónico ...",
     "verifyingEmailMessage": "Por favor, espera mientras verificamos tu dirección de correo electrónico.",
     "emailVerifiedSuccessfully": "¡Correo electrónico verificado exitosamente!",
     "emailVerifiedMessage": "Tu correo electrónico ha sido verificado. Ahora puedes iniciar sesión en DepaTrack y comenzar a rastrear tus prospectos de propiedades.",
@@ -94,13 +94,13 @@
     "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
     "passwordTooWeak": "La contraseña es demasiado débil. Por favor, elige una contraseña más fuerte.",
     "failedToResetPassword": "No se pudo restablecer la contraseña. Por favor, inténtalo de nuevo.",
-    "verifyingResetLink": "Verificando enlace de restablecimiento...",
+    "verifyingResetLink": "Verificando enlace de restablecimiento ...",
     "verifyingResetLinkMessage": "Por favor, espera mientras verificamos tu enlace de restablecimiento de contraseña.",
     "enterNewPasswordFor": "Ingresa tu nueva contraseña para {email}",
     "newPassword": "Nueva Contraseña",
     "enterNewPassword": "Ingresa nueva contraseña",
     "confirmNewPassword": "Confirma nueva contraseña",
-    "resetting": "Restableciendo...",
+    "resetting": "Restableciendo ...",
     "passwordResetSuccessful": "¡Contraseña restablecida exitosamente!",
     "passwordResetSuccessfulMessage": "Tu contraseña ha sido restablecida exitosamente. Ahora puedes iniciar sesión con tu nueva contraseña.",
     "signInToDepaTrack": "Iniciar sesión en DepaTrack",
@@ -134,7 +134,7 @@
       "comments": "Ingresa comentarios adicionales u observaciones",
       "link": "https://ejemplo.com/propiedad",
       "whatsapp": "+12345678901",
-      "location": "https://maps.google.com/..."
+      "location": "https://maps.google.com/ ..."
     },
     "openGoogleCalendar": "Abrir en Google Calendar",
     "markAsScheduled": "Marcar como agendada",
@@ -242,8 +242,8 @@
     "selectLanguage": "Seleccionar Idioma"
   },
   "sync": {
-    "processing": "Procesando...",
-    "syncing": "Sincronizando...",
+    "processing": "Procesando ...",
+    "syncing": "Sincronizando ...",
     "synced": "Sincronizado",
     "syncedNow": "Sincronizado ahora",
     "syncedMinutesAgo": "Sincronizado hace {minutes}m",
@@ -251,7 +251,7 @@
     "syncError": "Error de sincronización"
   },
   "loading": {
-    "loadingProperties": "Cargando propiedades..."
+    "loadingProperties": "Cargando propiedades ..."
   },
   "locale": {
     "dateFormat": "es-ES"
