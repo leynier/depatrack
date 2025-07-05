@@ -264,10 +264,10 @@ export class FirestoreService {
     await batch.commit();
   }
 
-  async batchUpdateProperties(properties: Property[]): Promise<void> {
+  async batchUpdateProperties(userId: string, properties: Property[]): Promise<void> {
     const batch = writeBatch(db);
     for (const property of properties) {
-      const firebaseProperty = await this.getPropertyByUuid(property.userId!, property.uuid);
+      const firebaseProperty = await this.getPropertyByUuid(userId, property.uuid);
       if (firebaseProperty) {
         const docRef = doc(db, this.COLLECTION_NAME, firebaseProperty.id);
         const updateData: Partial<FirestoreProperty> = {

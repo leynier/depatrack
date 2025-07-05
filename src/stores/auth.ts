@@ -2,6 +2,8 @@ import { analyticsService } from '@/services/analytics';
 import { AuthService, type AuthUser, type LoginCredentials, type RegisterCredentials } from '@/services/auth';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import { usePropertiesStore } from '@/stores/properties';
+import { useUserSettings } from '@/composables/useUserSettings';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null);
@@ -12,7 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => user.value !== null);
 
-  function initializeAuth(): void {
+  async function initializeAuth(): Promise<void> {
     isLoading.value = true;
     
     authService.onAuthStateChanged((authUser) => {
@@ -28,15 +30,11 @@ export const useAuthStore = defineStore('auth', () => {
       // If user just authenticated, trigger properties and settings sync
       if (!wasAuthenticated && authUser) {
         // Import stores dynamically to avoid circular dependency
-        import('@/stores/properties').then(({ usePropertiesStore }) => {
-          const propertiesStore = usePropertiesStore();
-          propertiesStore.syncWithFirebase();
-        });
+        const propertiesStore = usePropertiesStore();
+        propertiesStore.syncWithFirebase();
         
-        import('@/composables/useUserSettings').then(({ useUserSettings }) => {
-          const userSettings = useUserSettings();
-          userSettings.syncWithFirebase();
-        });
+        const userSettings = useUserSettings();
+        userSettings.syncWithFirebase();
       }
     });
   }
@@ -53,10 +51,8 @@ export const useAuthStore = defineStore('auth', () => {
       analyticsService.logLogin('email');
       
       // Trigger properties sync after successful login
-      import('@/stores/properties').then(({ usePropertiesStore }) => {
-        const propertiesStore = usePropertiesStore();
-        propertiesStore.syncWithFirebase();
-      });
+      const propertiesStore = usePropertiesStore();
+      propertiesStore.syncWithFirebase();
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Login failed';
       throw err;
@@ -77,10 +73,8 @@ export const useAuthStore = defineStore('auth', () => {
       analyticsService.logLogin('google');
       
       // Trigger properties sync after successful Google login
-      import('@/stores/properties').then(({ usePropertiesStore }) => {
-        const propertiesStore = usePropertiesStore();
-        propertiesStore.syncWithFirebase();
-      });
+      const propertiesStore = usePropertiesStore();
+      propertiesStore.syncWithFirebase();
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Google sign in failed';
       throw err;
@@ -110,10 +104,8 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null;
       
       // Clean up properties store subscriptions before logout
-      import('@/stores/properties').then(({ usePropertiesStore }) => {
-        const propertiesStore = usePropertiesStore();
-        propertiesStore.cleanup();
-      });
+      const propertiesStore = usePropertiesStore();
+      propertiesStore.cleanup();
       
       await authService.logout();
       

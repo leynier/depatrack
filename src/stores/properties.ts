@@ -4,7 +4,7 @@ import { analyticsService } from '@/services/analytics';
 import { FirestoreService } from '@/services/firestore';
 import { StorageService } from '@/services/storage';
 import { useAuthStore } from '@/stores/auth';
-import type { Property, PropertyFilters, PropertyFormData, PropertyStats, SortDirection, SortField } from '@/types/property';
+import type { Property, PropertyFilters, PropertyFormData, PropertyStats, SortDirection, SortField, DeletedPropertyRecord } from '@/types/property';
 import { PROPERTY_STATUS_LABELS } from '@/types/property';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
@@ -198,7 +198,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       }
 
       // 2. Merge Firebase changes into local data
-      const mergedProperties = mergeProperties(localProperties, firebaseProperties);
+      const mergedProperties = await mergeProperties(localProperties, firebaseProperties);
       const finalProperties = applyFirebaseDeletions(mergedProperties, firebaseDeletedRecords);
 
       // 3. Identify local changes to upload
@@ -215,7 +215,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       }
       if (updatedLocal.length > 0) {
         console.log(`Uploading ${updatedLocal.length} updated local properties.`);
-        await firestoreService.batchUpdateProperties(updatedLocal);
+        await firestoreService.batchUpdateProperties(userId, updatedLocal);
       }
       if (deletedLocal.length > 0) {
         console.log(`Uploading ${deletedLocal.length} deleted local properties.`);
@@ -255,7 +255,7 @@ export const usePropertiesStore = defineStore('properties', () => {
         const localProperties = storageService.getAllProperties();
         const firebaseDeletedRecords = await firestoreService.getDeletedProperties(authStore.user!.uid);
 
-        const merged = mergeProperties(localProperties, firebaseProperties);
+        const merged = await mergeProperties(localProperties, firebaseProperties);
         const final = applyFirebaseDeletions(merged, firebaseDeletedRecords);
 
         properties.value = final;
