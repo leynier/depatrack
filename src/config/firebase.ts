@@ -23,7 +23,7 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 // Initialize Analytics (only in production and when measurementId is available)
-export const analytics = typeof window !== 'undefined' && firebaseConfig.measurementId 
+export const analytics = import.meta.env.PROD && typeof window !== 'undefined' && firebaseConfig.measurementId 
   ? getAnalytics(app) 
   : null;
 
