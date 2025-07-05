@@ -11,10 +11,6 @@
                 {
                     "fieldPath": "updatedAt",
                     "mode": "ASCENDING"
-                },
-                {
-                    "fieldPath": "__name__",
-                    "mode": "ASCENDING"
                 }
             ]
         },
@@ -28,10 +24,6 @@
                 },
                 {
                     "fieldPath": "deletedAt",
-                    "mode": "ASCENDING"
-                },
-                {
-                    "fieldPath": "__name__",
                     "mode": "ASCENDING"
                 }
             ]
