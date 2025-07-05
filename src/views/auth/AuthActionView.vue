@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { applyActionCode, verifyPasswordResetCode, confirmPasswordReset } from 'firebase/auth';
+import { applyActionCode, verifyPasswordResetCode, confirmPasswordReset, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/config/firebase';
+import { useAuthStore } from '@/stores/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 
 const loading = ref(true);
 const mode = ref('');
@@ -56,6 +58,7 @@ onMounted(async () => {
 const handleEmailVerification = async () => {
   await applyActionCode(auth, actionCode);
   step.value = 'success';
+  // User must manually sign in after email verification
 };
 
 const handlePasswordResetVerification = async () => {
@@ -83,7 +86,12 @@ const resetPassword = async () => {
     isSubmitting.value = true;
     error.value = null;
     
+    // Reset the password
     await confirmPasswordReset(auth, actionCode, newPassword.value);
+    
+    // Auto-login with the new password
+    await signInWithEmailAndPassword(auth, email.value, newPassword.value);
+    
     step.value = 'success';
   } catch (err: any) {
     handleError(err);
@@ -134,12 +142,12 @@ const getDescription = () => {
   switch (mode.value) {
     case 'verifyEmail':
       return step.value === 'success' 
-        ? 'Your email has been verified. You can now sign in to DepaTrack.'
+        ? 'Your email has been verified successfully! You can now sign in to your DepaTrack account.'
         : error.value;
     case 'resetPassword':
       if (step.value === 'reset') return `Enter your new password for ${email.value}`;
       return step.value === 'success'
-        ? 'Your password has been reset successfully. You can now sign in with your new password.'
+        ? 'Your password has been reset successfully. You are now signed in to DepaTrack.'
         : error.value;
     case 'recoverEmail':
       return step.value === 'success'
@@ -153,19 +161,29 @@ const getDescription = () => {
 const getSuccessAction = () => {
   switch (mode.value) {
     case 'verifyEmail':
-      return 'Continue to DepaTrack';
-    case 'resetPassword':
       return 'Sign In to DepaTrack';
+    case 'resetPassword':
+      return auth.currentUser ? 'Continue to DepaTrack' : 'Sign In to DepaTrack';
     case 'recoverEmail':
-      return 'Continue to DepaTrack';
+      return 'Sign In to DepaTrack';
     default:
       return 'Back to DepaTrack';
   }
 };
 
 const goToLogin = () => {
+  // If user is authenticated (only after password reset), go directly to app
+  if (mode.value === 'resetPassword' && auth.currentUser) {
+    router.push('/');
+    return;
+  }
+  
+  // For email verification and other cases, go to login page with auto-open modal
   const params = new URLSearchParams();
-  if (mode.value === 'verifyEmail') params.set('verified', 'true');
+  if (mode.value === 'verifyEmail') {
+    params.set('verified', 'true');
+    params.set('openAuth', 'true'); // Signal to open auth modal
+  }
   if (mode.value === 'resetPassword') params.set('reset', 'success');
   
   router.push(`/?${params.toString()}`);

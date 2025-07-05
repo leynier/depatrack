@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { AuthService, type AuthUser, type LoginCredentials, type RegisterCredentials } from '@/services/auth';
+import { auth } from '@/config/firebase';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null);
@@ -41,7 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null;
       
       await authService.register(credentials);
-      // No automatic login - user needs to verify email first
+      // User is not authenticated after registration - must verify email first
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Registration failed';
       throw err;

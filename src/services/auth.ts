@@ -74,7 +74,7 @@ export class AuthService {
       // Send email verification
       await sendEmailVerification(userCredential.user);
       
-      // Sign out immediately - no automatic login
+      // Sign out immediately - user must verify email first
       await signOut(auth);
     } catch (error) {
       throw this.handleAuthError(error as AuthError);
@@ -92,6 +92,19 @@ export class AuthService {
   async sendPasswordReset(email: string): Promise<void> {
     try {
       await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      throw this.handleAuthError(error as AuthError);
+    }
+  }
+
+  async resendEmailVerification(): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('No user is currently signed in');
+    }
+    
+    try {
+      await sendEmailVerification(user);
     } catch (error) {
       throw this.handleAuthError(error as AuthError);
     }

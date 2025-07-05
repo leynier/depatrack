@@ -19,7 +19,6 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-background text-foreground">
-    <AppHeader />
-    <AppMain />
+    <router-view />
   </div>
 </template>
