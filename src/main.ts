@@ -12,3 +12,9 @@ app.use(createPinia())
 app.use(router)
 
 app.mount('#app')
+
+// Log app_open event
+import { analytics } from './config/firebase'
+import { logEvent } from 'firebase/analytics'
+
+logEvent(analytics, 'app_open')
