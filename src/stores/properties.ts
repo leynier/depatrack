@@ -28,6 +28,19 @@ export const usePropertiesStore = defineStore('properties', () => {
 
   let unsubscribeFromFirestore: (() => void) | null = null;
 
+  // Track pending operations to avoid race conditions with real-time updates
+  const pendingOperations = ref<Set<string>>(new Set());
+
+  // Helper function to clear pending operations after a timeout
+  function clearPendingOperationAfterTimeout(uuid: string, timeoutMs: number = 5000): void {
+    setTimeout(() => {
+      if (pendingOperations.value.has(uuid)) {
+        console.log(`Clearing pending operation for ${uuid} after timeout`);
+        pendingOperations.value.delete(uuid);
+      }
+    }, timeoutMs);
+  }
+
   const filteredProperties = computed(() => {
     let filtered = [...properties.value];
 
@@ -250,6 +263,12 @@ export const usePropertiesStore = defineStore('properties', () => {
     unsubscribeFromFirestore = firestoreService.subscribeToUserProperties(
       authStore.user.uid,
       async (firebaseProperties) => {
+        // Skip real-time updates if there are pending operations to avoid race conditions
+        if (pendingOperations.value.size > 0) {
+          console.log('Skipping real-time update due to pending operations');
+          return;
+        }
+
         // When real-time updates come in, merge them with current local state
         // and apply any deletions that might have occurred remotely.
         const localProperties = storageService.getAllProperties();
@@ -330,6 +349,10 @@ export const usePropertiesStore = defineStore('properties', () => {
       // Generate unique UUID for sync across devices
       const propertyUuid = crypto.randomUUID();
       
+      // Add to pending operations to prevent race conditions
+      pendingOperations.value.add(propertyUuid);
+      clearPendingOperationAfterTimeout(propertyUuid);
+      
       // Create property locally first
       const property: Property = {
         id: crypto.randomUUID(), // Local storage ID
@@ -361,8 +384,15 @@ export const usePropertiesStore = defineStore('properties', () => {
       
       // Trigger sync if online
       if (authStore.isAuthenticated && isOnline.value) {
-        syncWithFirebase();
+        try {
+          await syncWithFirebase();
+        } catch (syncError) {
+          console.error('Sync failed during create:', syncError);
+        }
       }
+      
+      // Remove from pending operations after sync completes
+      pendingOperations.value.delete(propertyUuid);
       
       return property;
     } catch (err) {
@@ -398,6 +428,12 @@ export const usePropertiesStore = defineStore('properties', () => {
     };
 
     try {
+      // Add to pending operations to prevent race conditions
+      if (updatedProperty.uuid) {
+        pendingOperations.value.add(updatedProperty.uuid);
+        clearPendingOperationAfterTimeout(updatedProperty.uuid);
+      }
+      
       // Update locally first
       storageService.saveProperty(updatedProperty);
       const index = properties.value.findIndex(p => p.id === id);
@@ -419,7 +455,16 @@ export const usePropertiesStore = defineStore('properties', () => {
       
       // Trigger sync if online
       if (authStore.isAuthenticated && isOnline.value) {
-        syncWithFirebase();
+        try {
+          await syncWithFirebase();
+        } catch (syncError) {
+          console.error('Sync failed during update:', syncError);
+        }
+      }
+      
+      // Remove from pending operations after sync completes
+      if (updatedProperty.uuid) {
+        pendingOperations.value.delete(updatedProperty.uuid);
       }
       
       error.value = null;
@@ -435,6 +480,13 @@ export const usePropertiesStore = defineStore('properties', () => {
       const property = properties.value.find(p => p.id === id);
       if (!property) {
         throw new Error('Property not found');
+      }
+      
+      // Add to pending operations to prevent race conditions
+      if (property.uuid) {
+        pendingOperations.value.add(property.uuid);
+        // Clear pending operation after timeout as fallback
+        clearPendingOperationAfterTimeout(property.uuid);
       }
       
       // Delete locally first
@@ -455,11 +507,26 @@ export const usePropertiesStore = defineStore('properties', () => {
       
       // Trigger sync if online
       if (authStore.isAuthenticated && isOnline.value) {
-        syncWithFirebase();
+        try {
+          await syncWithFirebase();
+        } catch (syncError) {
+          console.error('Sync failed during delete:', syncError);
+          // Continue with local deletion even if sync fails
+        }
+      }
+      
+      // Remove from pending operations after sync completes
+      if (property.uuid) {
+        pendingOperations.value.delete(property.uuid);
       }
       
       error.value = null;
     } catch (err) {
+      // Remove from pending operations on error
+      const property = properties.value.find(p => p.id === id);
+      if (property?.uuid) {
+        pendingOperations.value.delete(property.uuid);
+      }
       error.value = err instanceof Error ? err.message : 'Failed to delete property';
       throw err;
     }
@@ -516,6 +583,11 @@ export const usePropertiesStore = defineStore('properties', () => {
       // Log analytics event
       analyticsService.logPropertyImport(propertiesWithUuids.length, 'csv');
       
+      // Trigger sync if online
+      if (authStore.isAuthenticated && isOnline.value) {
+        syncWithFirebase();
+      }
+      
       error.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to import properties';
@@ -539,6 +611,14 @@ export const usePropertiesStore = defineStore('properties', () => {
         storageService.saveProperty(property);
         properties.value.push(property);
       });
+      
+      // Log analytics event
+      analyticsService.logPropertyImport(propertiesWithNewIds.length, 'csv');
+      
+      // Trigger sync if online
+      if (authStore.isAuthenticated && isOnline.value) {
+        syncWithFirebase();
+      }
       
       error.value = null;
     } catch (err) {
