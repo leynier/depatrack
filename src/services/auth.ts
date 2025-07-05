@@ -9,6 +9,7 @@ import {
   type AuthError
 } from 'firebase/auth';
 import { auth } from '@/config/firebase';
+import { analyticsService } from '@/services/analytics';
 
 export interface AuthUser {
   uid: string;
@@ -50,17 +51,27 @@ export class AuthService {
       // Check if email is verified
       if (!userCredential.user.emailVerified) {
         await signOut(auth);
+        // Track failed login attempt
+        analyticsService.trackError('Login failed - Email not verified', 'auth_service');
         throw new Error('Please verify your email before signing in. Check your inbox for the verification link.');
       }
       
+      // Track successful login
+      analyticsService.trackLogin('email');
+      analyticsService.setUserId(userCredential.user.uid);
+      
       return this.mapFirebaseUser(userCredential.user);
     } catch (error) {
+      // Track login error
+      analyticsService.trackError(`Login failed - ${(error as AuthError).code}`, 'auth_service');
       throw this.handleAuthError(error as AuthError);
     }
   }
 
   async register(credentials: RegisterCredentials): Promise<void> {
     if (credentials.password !== credentials.confirmPassword) {
+      // Track password mismatch error
+      analyticsService.trackError('Registration failed - Password mismatch', 'auth_service');
       throw new Error('Passwords do not match');
     }
 
@@ -74,17 +85,27 @@ export class AuthService {
       // Send email verification
       await sendEmailVerification(userCredential.user);
       
+      // Track successful registration
+      analyticsService.trackSignup('email');
+      
       // Sign out immediately - no automatic login
       await signOut(auth);
     } catch (error) {
+      // Track registration error
+      analyticsService.trackError(`Registration failed - ${(error as AuthError).code}`, 'auth_service');
       throw this.handleAuthError(error as AuthError);
     }
   }
 
   async logout(): Promise<void> {
     try {
+      // Track logout event
+      analyticsService.logEvent('logout');
+      
       await signOut(auth);
     } catch (error) {
+      // Track logout error
+      analyticsService.trackError(`Logout failed - ${(error as AuthError).code}`, 'auth_service');
       throw this.handleAuthError(error as AuthError);
     }
   }
@@ -92,7 +113,12 @@ export class AuthService {
   async sendPasswordReset(email: string): Promise<void> {
     try {
       await sendPasswordResetEmail(auth, email);
+      
+      // Track password reset request
+      analyticsService.logEvent('password_reset_requested');
     } catch (error) {
+      // Track password reset error
+      analyticsService.trackError(`Password reset failed - ${(error as AuthError).code}`, 'auth_service');
       throw this.handleAuthError(error as AuthError);
     }
   }
