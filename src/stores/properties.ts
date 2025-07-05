@@ -4,7 +4,7 @@ import { analyticsService } from '@/services/analytics';
 import { FirestoreService } from '@/services/firestore';
 import { StorageService } from '@/services/storage';
 import { useAuthStore } from '@/stores/auth';
-import type { Property, PropertyFilters, PropertyFormData, PropertyStats, SortDirection, SortField, DeletedPropertyRecord } from '@/types/property';
+import type { DeletedPropertyRecord, Property, PropertyFilters, PropertyFormData, PropertyStats, SortDirection, SortField } from '@/types/property';
 import { PROPERTY_STATUS_LABELS } from '@/types/property';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
@@ -204,7 +204,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       // 3. Identify local changes to upload
       const { newLocal, updatedLocal, deletedLocal } = identifyLocalChanges(
         localProperties,
-        finalProperties, // Use finalProperties as the base for comparison
+        firebaseProperties, // Pass raw firebase properties for comparison
         localDeletedUuids
       );
 
@@ -286,43 +286,41 @@ export const usePropertiesStore = defineStore('properties', () => {
   }
 
   function applyFirebaseDeletions(properties: Property[], deletedRecords: DeletedPropertyRecord[]): Property[] {
-    const deletedUuids = new Set(deletedRecords.map(d => d.uuid));
-    return properties.filter(prop => !deletedUuids.has(prop.uuid));
+    const deletedUuids = new Set(deletedRecords.map(r => r.uuid));
+    return properties.filter(p => !deletedUuids.has(p.uuid));
   }
 
   function identifyLocalChanges(
-    localBeforeSync: Property[],
-    localAfterSync: Property[],
+    localProperties: Property[],
+    firebaseProperties: Property[],
     localDeletedUuids: string[]
   ): { newLocal: Property[]; updatedLocal: Property[]; deletedLocal: string[] } {
+    const firebaseMap = new Map(firebaseProperties.map(p => [p.uuid, p]));
+
     const newLocal: Property[] = [];
     const updatedLocal: Property[] = [];
-    const deletedLocal: string[] = [...localDeletedUuids]; // Start with locally marked deletions
 
-    const localBeforeMap = new Map<string, Property>(localBeforeSync.map(p => [p.uuid, p]));
-    const localAfterMap = new Map<string, Property>(localAfterSync.map(p => [p.uuid, p]));
+    for (const localProp of localProperties) {
+      const firebaseProp = firebaseMap.get(localProp.uuid);
 
-    // Identify new and updated properties
-    localAfterSync.forEach(prop => {
-      const existing = localBeforeMap.get(prop.uuid);
-      if (!existing) {
-        // This property is new locally (created after last sync or imported)
-        newLocal.push(prop);
-      } else if (prop.updatedAt > existing.updatedAt) {
-        // This property was updated locally
-        updatedLocal.push(prop);
+      if (!firebaseProp) {
+        // Property exists locally but not in Firestore, so it's new.
+        newLocal.push(localProp);
+      } else {
+        // Property exists in both places, check if local is more recent.
+        // Use getTime() for a reliable numeric comparison of dates.
+        if (new Date(localProp.updatedAt).getTime() > new Date(firebaseProp.updatedAt).getTime()) {
+          updatedLocal.push(localProp);
+        }
       }
-    });
+    }
 
-    // Identify properties deleted locally (not present in localAfterSync but were in localBeforeSync)
-    localBeforeSync.forEach(prop => {
-      if (!localAfterMap.has(prop.uuid) && !deletedLocal.includes(prop.uuid)) {
-        // If it's not in the final merged set and not already marked for deletion
-        deletedLocal.push(prop.uuid);
-      }
-    });
-
-    return { newLocal, updatedLocal, deletedLocal };
+    // Deleted properties are tracked separately via a dedicated list
+    return {
+      newLocal,
+      updatedLocal,
+      deletedLocal: localDeletedUuids
+    };
   }
 
   async function createProperty(formData: PropertyFormData): Promise<Property> {
