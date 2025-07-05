@@ -1,26 +1,41 @@
 {
-  // Example:
-  //
-  // "indexes": [
-  //   {
-  //     "collectionGroup": "widgets",
-  //     "queryScope": "COLLECTION",
-  //     "fields": [
-  //       { "fieldPath": "foo", "arrayConfig": "CONTAINS" },
-  //       { "fieldPath": "bar", "mode": "DESCENDING" }
-  //     ]
-  //   },
-  //
-  //  "fieldOverrides": [
-  //    {
-  //      "collectionGroup": "widgets",
-  //      "fieldPath": "baz",
-  //      "indexes": [
-  //        { "order": "ASCENDING", "queryScope": "COLLECTION" }
-  //      ]
-  //    },
-  //   ]
-  // ]
-  "indexes": [],
-  "fieldOverrides": []
+    "indexes": [
+        {
+            "collectionGroup": "properties",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "mode": "ASCENDING"
+                },
+                {
+                    "fieldPath": "updatedAt",
+                    "mode": "ASCENDING"
+                },
+                {
+                    "fieldPath": "__name__",
+                    "mode": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "deletedProperties",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "userId",
+                    "mode": "ASCENDING"
+                },
+                {
+                    "fieldPath": "deletedAt",
+                    "mode": "ASCENDING"
+                },
+                {
+                    "fieldPath": "__name__",
+                    "mode": "ASCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
 }
