@@ -152,6 +152,9 @@ export const usePropertiesStore = defineStore('properties', () => {
       // Always load from localStorage first for immediate UI response
       properties.value = storageService.getAllProperties();
       
+      // Assign UUIDs to existing properties that don't have them
+      assignUuidsToExistingProperties();
+      
       // If user is authenticated and online, sync with Firebase
       if (authStore.isAuthenticated && isOnline.value) {
         syncWithFirebase();
@@ -172,8 +175,17 @@ export const usePropertiesStore = defineStore('properties', () => {
       // Get Firebase properties
       const firebaseProperties = await firestoreService.getUserProperties(authStore.user.uid);
       
+      // If Firebase is empty but we have local properties, migrate them
+      if (firebaseProperties.length === 0 && properties.value.length > 0) {
+        console.log('Migrating local properties to Firebase...');
+        await migrateLocalPropertiesToFirebase();
+      }
+      
+      // Get updated Firebase properties after migration
+      const updatedFirebaseProperties = await firestoreService.getUserProperties(authStore.user.uid);
+      
       // Merge with local properties, preferring newer ones
-      const mergedProperties = mergeProperties(properties.value, firebaseProperties);
+      const mergedProperties = await mergeProperties(properties.value, updatedFirebaseProperties);
       
       // Update both local and Firebase storage
       properties.value = mergedProperties;
@@ -196,26 +208,87 @@ export const usePropertiesStore = defineStore('properties', () => {
     
     unsubscribeFromFirestore = firestoreService.subscribeToUserProperties(
       authStore.user.uid,
-      (firebaseProperties) => {
+      async (firebaseProperties) => {
         // Update local properties with Firebase changes
-        const mergedProperties = mergeProperties(properties.value, firebaseProperties);
+        const mergedProperties = await mergeProperties(properties.value, firebaseProperties);
         properties.value = mergedProperties;
         storageService.importProperties(mergedProperties);
       }
     );
   }
 
-  function mergeProperties(localProps: Property[], firebaseProps: Property[]): Property[] {
+  async function migrateLocalPropertiesToFirebase(): Promise<void> {
+    if (!authStore.user) return;
+    
+    const localProperties = properties.value;
+    for (const property of localProperties) {
+      try {
+        // Assign UUID if property doesn't have one (for backward compatibility)
+        if (!property.uuid) {
+          property.uuid = crypto.randomUUID();
+          storageService.saveProperty(property); // Update localStorage with UUID
+        }
+        
+        const formData: PropertyFormData = {
+          zone: property.zone,
+          price: property.price,
+          status: property.status,
+          requirements: property.requirements,
+          comments: property.comments,
+          link: property.link,
+          location: property.location,
+          whatsapp: property.whatsapp,
+          appointmentDate: property.appointmentDate,
+          isCalendarScheduled: property.isCalendarScheduled
+        };
+        
+        await firestoreService.createProperty(authStore.user.uid, formData, property.uuid);
+        console.log(`Migrated property: ${property.zone} (UUID: ${property.uuid})`);
+      } catch (error) {
+        console.error(`Failed to migrate property ${property.id}:`, error);
+      }
+    }
+  }
+
+  async function mergeProperties(localProps: Property[], firebaseProps: Property[]): Promise<Property[]> {
     const merged = new Map<string, Property>();
     
-    // Add local properties
-    localProps.forEach(prop => merged.set(prop.id, prop));
+    // Get deleted properties to filter them out
+    let deletedUuids = new Set<string>();
+    if (authStore.user) {
+      try {
+        const deletedProperties = await firestoreService.getDeletedProperties(authStore.user.uid);
+        deletedUuids = new Set(deletedProperties.map(d => d.uuid));
+      } catch (error) {
+        console.error('Failed to get deleted properties:', error);
+      }
+    }
+    
+    // Add local properties (keyed by UUID for proper sync)
+    localProps.forEach(prop => {
+      // Skip deleted properties
+      if (deletedUuids.has(prop.uuid)) {
+        return;
+      }
+      
+      // Assign UUID if missing (backward compatibility)
+      if (!prop.uuid) {
+        prop.uuid = crypto.randomUUID();
+        storageService.saveProperty(prop);
+      }
+      merged.set(prop.uuid, prop);
+    });
     
     // Add/update with Firebase properties (prefer newer ones)
     firebaseProps.forEach(prop => {
-      const existing = merged.get(prop.id);
+      // Skip deleted properties
+      if (deletedUuids.has(prop.uuid)) {
+        return;
+      }
+      
+      const existing = merged.get(prop.uuid);
       if (!existing || prop.updatedAt > existing.updatedAt) {
-        merged.set(prop.id, prop);
+        merged.set(prop.uuid, prop);
       }
     });
     
@@ -226,9 +299,13 @@ export const usePropertiesStore = defineStore('properties', () => {
     try {
       error.value = null;
       
+      // Generate unique UUID for sync across devices
+      const propertyUuid = crypto.randomUUID();
+      
       // Create property locally first
       const property: Property = {
-        id: crypto.randomUUID(),
+        id: crypto.randomUUID(), // Local storage ID
+        uuid: propertyUuid, // Sync UUID across devices
         zone: formData.zone,
         price: formData.price || 0,
         status: formData.status,
@@ -250,7 +327,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       // Sync with Firebase if authenticated and online
       if (authStore.isAuthenticated && isOnline.value) {
         try {
-          await firestoreService.createProperty(authStore.user!.uid, formData);
+          await firestoreService.createProperty(authStore.user!.uid, formData, propertyUuid);
         } catch (firebaseError) {
           console.error('Firebase create failed:', firebaseError);
           // Continue with local storage - sync will handle it later
@@ -268,6 +345,11 @@ export const usePropertiesStore = defineStore('properties', () => {
     const existingProperty = properties.value.find(p => p.id === id);
     if (!existingProperty) {
       throw new Error('Property not found');
+    }
+
+    // Assign UUID if property doesn't have one (backward compatibility)
+    if (!existingProperty.uuid) {
+      existingProperty.uuid = crypto.randomUUID();
     }
 
     const updatedProperty: Property = {
@@ -294,9 +376,13 @@ export const usePropertiesStore = defineStore('properties', () => {
       }
       
       // Sync with Firebase if authenticated and online
-      if (authStore.isAuthenticated && isOnline.value) {
+      if (authStore.isAuthenticated && isOnline.value && updatedProperty.uuid) {
         try {
-          await firestoreService.updateProperty(id, formData);
+          // Find Firebase property by UUID to get the correct Firestore document ID
+          const firebaseProperty = await firestoreService.getPropertyByUuid(authStore.user!.uid, updatedProperty.uuid);
+          if (firebaseProperty) {
+            await firestoreService.updateProperty(firebaseProperty.id, formData);
+          }
         } catch (firebaseError) {
           console.error('Firebase update failed:', firebaseError);
           // Continue with local storage - sync will handle it later
@@ -313,14 +399,23 @@ export const usePropertiesStore = defineStore('properties', () => {
 
   async function deleteProperty(id: string): Promise<void> {
     try {
+      const property = properties.value.find(p => p.id === id);
+      if (!property) {
+        throw new Error('Property not found');
+      }
+      
       // Delete locally first
       storageService.deleteProperty(id);
       properties.value = properties.value.filter(p => p.id !== id);
       
       // Sync with Firebase if authenticated and online
-      if (authStore.isAuthenticated && isOnline.value) {
+      if (authStore.isAuthenticated && isOnline.value && property.uuid) {
         try {
-          await firestoreService.deleteProperty(id);
+          // Find Firebase property by UUID to get the correct Firestore document ID
+          const firebaseProperty = await firestoreService.getPropertyByUuid(authStore.user!.uid, property.uuid);
+          if (firebaseProperty) {
+            await firestoreService.deleteProperty(firebaseProperty.id, property.uuid, authStore.user!.uid);
+          }
         } catch (firebaseError) {
           console.error('Firebase delete failed:', firebaseError);
           // Continue with local deletion - sync will handle it later
@@ -352,8 +447,15 @@ export const usePropertiesStore = defineStore('properties', () => {
 
   function importProperties(newProperties: Property[]): void {
     try {
-      storageService.importProperties(newProperties);
-      properties.value = newProperties;
+      // Ensure all imported properties have UUIDs
+      const propertiesWithUuids = newProperties.map(property => ({
+        ...property,
+        uuid: property.uuid || crypto.randomUUID(),
+        updatedAt: new Date()
+      }));
+      
+      storageService.importProperties(propertiesWithUuids);
+      properties.value = propertiesWithUuids;
       error.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to import properties';
@@ -363,10 +465,11 @@ export const usePropertiesStore = defineStore('properties', () => {
 
   function addProperties(newProperties: Property[]): void {
     try {
-      // Generate new IDs for imported properties to avoid conflicts
+      // Generate new IDs and UUIDs for imported properties to avoid conflicts
       const propertiesWithNewIds = newProperties.map(property => ({
         ...property,
         id: crypto.randomUUID(),
+        uuid: property.uuid || crypto.randomUUID(), // Keep existing UUID or generate new one
         createdAt: new Date(),
         updatedAt: new Date()
       }));
@@ -395,6 +498,11 @@ export const usePropertiesStore = defineStore('properties', () => {
         throw new Error('Property not found');
       }
 
+      // Assign UUID if property doesn't have one (backward compatibility)
+      if (!property.uuid) {
+        property.uuid = crypto.randomUUID();
+      }
+
       const updatedProperty: Property = {
         ...property,
         isCalendarScheduled: true,
@@ -409,9 +517,13 @@ export const usePropertiesStore = defineStore('properties', () => {
       }
       
       // Sync with Firebase if authenticated and online
-      if (authStore.isAuthenticated && isOnline.value) {
+      if (authStore.isAuthenticated && isOnline.value && updatedProperty.uuid) {
         try {
-          await firestoreService.markCalendarScheduled(id);
+          // Find Firebase property by UUID to get the correct Firestore document ID
+          const firebaseProperty = await firestoreService.getPropertyByUuid(authStore.user!.uid, updatedProperty.uuid);
+          if (firebaseProperty) {
+            await firestoreService.markCalendarScheduled(firebaseProperty.id);
+          }
         } catch (firebaseError) {
           console.error('Firebase calendar update failed:', firebaseError);
           // Continue with local update - sync will handle it later
@@ -422,6 +534,23 @@ export const usePropertiesStore = defineStore('properties', () => {
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to mark calendar as scheduled';
       throw err;
+    }
+  }
+
+  function assignUuidsToExistingProperties(): void {
+    let hasChanges = false;
+    
+    properties.value.forEach(property => {
+      if (!property.uuid) {
+        property.uuid = crypto.randomUUID();
+        property.updatedAt = new Date();
+        storageService.saveProperty(property);
+        hasChanges = true;
+      }
+    });
+    
+    if (hasChanges) {
+      console.log('Assigned UUIDs to existing properties without UUID');
     }
   }
 
@@ -472,6 +601,7 @@ export const usePropertiesStore = defineStore('properties', () => {
     setSortField,
     setSortDirection,
     syncWithFirebase,
+    assignUuidsToExistingProperties,
     cleanup
   };
 });

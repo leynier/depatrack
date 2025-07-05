@@ -4,6 +4,7 @@ import { PROPERTY_STATUS_LABELS } from '@/types/property';
 export function exportToCSV(properties: Property[]): string {
   const headers = [
     'ID',
+    'UUID',
     'Zone',
     'Price',
     'Status',
@@ -20,6 +21,7 @@ export function exportToCSV(properties: Property[]): string {
 
   const rows = properties.map(property => [
     property.id,
+    property.uuid,
     property.zone,
     property.price.toString(),
     PROPERTY_STATUS_LABELS[property.status],
@@ -137,10 +139,12 @@ function parsePropertyFromCSV(headers: string[], values: string[]): Property | n
   const status = mapStatusFromLabel(statusStr);
 
   const id = getField('id') || crypto.randomUUID();
+  const uuid = getField('uuid') || crypto.randomUUID(); // Use existing UUID or generate new one
   const now = new Date();
 
   return {
     id,
+    uuid,
     zone,
     price,
     status,

@@ -15,7 +15,7 @@ import {
   FirestoreError
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import type { Property, PropertyFormData } from '@/types/property';
+import type { Property, PropertyFormData, DeletedPropertyRecord } from '@/types/property';
 
 export interface FirestoreProperty extends Omit<Property, 'createdAt' | 'updatedAt' | 'appointmentDate'> {
   userId: string;
@@ -24,9 +24,16 @@ export interface FirestoreProperty extends Omit<Property, 'createdAt' | 'updated
   appointmentDate?: Timestamp;
 }
 
+export interface FirestoreDeletedProperty extends Omit<DeletedPropertyRecord, 'deletedAt'> {
+  userId: string;
+  deletedAt: Timestamp;
+}
+
 export class FirestoreService {
   private static instance: FirestoreService;
   private readonly COLLECTION_NAME = 'properties';
+  private readonly DELETED_COLLECTION_NAME = 'deletedProperties';
+  private deviceId: string;
   
   static getInstance(): FirestoreService {
     if (!FirestoreService.instance) {
@@ -35,7 +42,22 @@ export class FirestoreService {
     return FirestoreService.instance;
   }
 
-  private constructor() {}
+  private constructor() {
+    // Generate or retrieve a unique device ID
+    this.deviceId = this.getOrCreateDeviceId();
+  }
+
+  private getOrCreateDeviceId(): string {
+    const storageKey = 'depatrack_device_id';
+    let deviceId = localStorage.getItem(storageKey);
+    
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      localStorage.setItem(storageKey, deviceId);
+    }
+    
+    return deviceId;
+  }
 
   async getUserProperties(userId: string): Promise<Property[]> {
     try {
@@ -65,10 +87,32 @@ export class FirestoreService {
     }
   }
 
-  async createProperty(userId: string, formData: PropertyFormData): Promise<Property> {
+  async getPropertyByUuid(userId: string, uuid: string): Promise<Property | null> {
     try {
+      const q = query(
+        collection(db, this.COLLECTION_NAME),
+        where('userId', '==', userId),
+        where('uuid', '==', uuid)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return this.mapFirestoreProperty(doc.data() as FirestoreProperty, doc.id);
+      }
+      return null;
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  async createProperty(userId: string, formData: PropertyFormData, uuid?: string): Promise<Property> {
+    try {
+      const propertyUuid = uuid || crypto.randomUUID();
+      
       const firestoreProperty: Omit<FirestoreProperty, 'id'> = {
         userId,
+        uuid: propertyUuid,
         zone: formData.zone,
         price: formData.price || 0,
         status: formData.status,
@@ -77,11 +121,15 @@ export class FirestoreService {
         link: formData.link || '',
         location: formData.location || '',
         whatsapp: formData.whatsapp || '',
-        appointmentDate: formData.appointmentDate ? Timestamp.fromDate(formData.appointmentDate) : undefined,
         isCalendarScheduled: formData.isCalendarScheduled || false,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       };
+
+      // Only add appointmentDate if it exists (Firestore doesn't allow undefined)
+      if (formData.appointmentDate) {
+        firestoreProperty.appointmentDate = Timestamp.fromDate(formData.appointmentDate);
+      }
 
       const docRef = await addDoc(collection(db, this.COLLECTION_NAME), firestoreProperty);
       return this.mapFirestoreProperty({ ...firestoreProperty, id: docRef.id }, docRef.id);
@@ -103,10 +151,14 @@ export class FirestoreService {
         link: formData.link || '',
         location: formData.location || '',
         whatsapp: formData.whatsapp || '',
-        appointmentDate: formData.appointmentDate ? Timestamp.fromDate(formData.appointmentDate) : undefined,
         isCalendarScheduled: formData.isCalendarScheduled || false,
         updatedAt: Timestamp.now()
       };
+
+      // Only add appointmentDate if it exists (Firestore doesn't allow undefined)
+      if (formData.appointmentDate) {
+        updateData.appointmentDate = Timestamp.fromDate(formData.appointmentDate);
+      }
 
       await updateDoc(docRef, updateData);
       
@@ -121,10 +173,46 @@ export class FirestoreService {
     }
   }
 
-  async deleteProperty(propertyId: string): Promise<void> {
+  async deleteProperty(propertyId: string, propertyUuid: string, userId: string): Promise<void> {
     try {
+      // Delete the property
       const docRef = doc(db, this.COLLECTION_NAME, propertyId);
       await deleteDoc(docRef);
+      
+      // Record the deletion
+      await this.recordPropertyDeletion(propertyUuid, userId);
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  private async recordPropertyDeletion(uuid: string, userId: string): Promise<void> {
+    const deletedRecord: Omit<FirestoreDeletedProperty, 'id'> = {
+      userId,
+      uuid,
+      deviceId: this.deviceId,
+      deletedAt: Timestamp.now()
+    };
+    
+    await addDoc(collection(db, this.DELETED_COLLECTION_NAME), deletedRecord);
+  }
+
+  async getDeletedProperties(userId: string): Promise<DeletedPropertyRecord[]> {
+    try {
+      const q = query(
+        collection(db, this.DELETED_COLLECTION_NAME),
+        where('userId', '==', userId)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data() as FirestoreDeletedProperty;
+        return {
+          uuid: data.uuid,
+          deviceId: data.deviceId,
+          deletedAt: data.deletedAt.toDate()
+        };
+      });
     } catch (error) {
       throw this.handleFirestoreError(error as FirestoreError);
     }
@@ -177,6 +265,7 @@ export class FirestoreService {
   private mapFirestoreProperty(firestoreProperty: FirestoreProperty, id: string): Property {
     return {
       id,
+      uuid: firestoreProperty.uuid,
       zone: firestoreProperty.zone,
       price: firestoreProperty.price,
       status: firestoreProperty.status,

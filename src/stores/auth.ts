@@ -16,8 +16,18 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = true;
     
     authService.onAuthStateChanged((authUser) => {
+      const wasAuthenticated = user.value !== null;
       user.value = authUser;
       isLoading.value = false;
+      
+      // If user just authenticated, trigger properties sync
+      if (!wasAuthenticated && authUser) {
+        // Import properties store dynamically to avoid circular dependency
+        import('@/stores/properties').then(({ usePropertiesStore }) => {
+          const propertiesStore = usePropertiesStore();
+          propertiesStore.syncWithFirebase();
+        });
+      }
     });
   }
 
@@ -28,6 +38,12 @@ export const useAuthStore = defineStore('auth', () => {
       
       const authUser = await authService.login(credentials);
       user.value = authUser;
+      
+      // Trigger properties sync after successful login
+      import('@/stores/properties').then(({ usePropertiesStore }) => {
+        const propertiesStore = usePropertiesStore();
+        propertiesStore.syncWithFirebase();
+      });
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Login failed';
       throw err;
@@ -43,6 +59,12 @@ export const useAuthStore = defineStore('auth', () => {
       
       const authUser = await authService.signInWithGoogle();
       user.value = authUser;
+      
+      // Trigger properties sync after successful Google login
+      import('@/stores/properties').then(({ usePropertiesStore }) => {
+        const propertiesStore = usePropertiesStore();
+        propertiesStore.syncWithFirebase();
+      });
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Google sign in failed';
       throw err;
@@ -70,6 +92,12 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       isLoading.value = true;
       error.value = null;
+      
+      // Clean up properties store subscriptions before logout
+      import('@/stores/properties').then(({ usePropertiesStore }) => {
+        const propertiesStore = usePropertiesStore();
+        propertiesStore.cleanup();
+      });
       
       await authService.logout();
       user.value = null;

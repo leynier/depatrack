@@ -15,7 +15,8 @@ export type PropertyStatus =
   | 'not_interested';
 
 export interface Property {
-  id: string;
+  id: string; // Firestore document ID
+  uuid: string; // Unique identifier for sync across devices
   zone: string;
   price: number;
   status: PropertyStatus;
@@ -65,6 +66,12 @@ export interface PropertyStats {
   completed: number;
   rejected: number;
   averagePrice: number;
+}
+
+export interface DeletedPropertyRecord {
+  uuid: string;
+  deletedAt: Date;
+  deviceId: string; // To track which device deleted it
 }
 
 export const PROPERTY_STATUS_LABELS: Record<PropertyStatus, string> = {
