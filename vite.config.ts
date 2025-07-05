@@ -17,6 +17,6 @@ export default defineConfig({
     port: 5173,
     host: true,
   },
-  // GitHub Pages configuration - using repository path
-  base: '/depatrack/',
+  // Firebase Hosting configuration - using root path
+  base: '/',
 })

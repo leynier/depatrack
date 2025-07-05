@@ -34,6 +34,10 @@ coverage
 .mcp.json
 claude_desktop_config.json
 
+# Firebase
+.firebase/
+.firebaserc
+
 # START Ruler Generated Files
 .aider.conf.yml
 .clinerules

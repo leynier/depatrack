@@ -3,6 +3,9 @@ import { ref, computed } from 'vue';
 import type { Property, PropertyFormData, PropertyFilters, PropertyStats, PropertySort, SortField, SortDirection } from '@/types/property';
 import { PROPERTY_STATUS_LABELS } from '@/types/property';
 import { StorageService } from '@/services/storage';
+import { FirestoreService } from '@/services/firestore';
+import { useAuthStore } from '@/stores/auth';
+import { useNetworkStatus } from '@/composables/useNetworkStatus';
 
 export const usePropertiesStore = defineStore('properties', () => {
   const properties = ref<Property[]>([]);
@@ -10,8 +13,15 @@ export const usePropertiesStore = defineStore('properties', () => {
   const sort = ref<PropertySort>({ field: 'zone', direction: 'asc' });
   const isLoading = ref(false);
   const error = ref<string | null>(null);
+  const isSyncing = ref(false);
+  const lastSyncTime = ref<Date | null>(null);
 
   const storageService = StorageService.getInstance();
+  const firestoreService = FirestoreService.getInstance();
+  const authStore = useAuthStore();
+  const { isOnline } = useNetworkStatus();
+
+  let unsubscribeFromFirestore: (() => void) | null = null;
 
   const filteredProperties = computed(() => {
     let filtered = [...properties.value];
@@ -138,7 +148,14 @@ export const usePropertiesStore = defineStore('properties', () => {
     try {
       isLoading.value = true;
       error.value = null;
+      
+      // Always load from localStorage first for immediate UI response
       properties.value = storageService.getAllProperties();
+      
+      // If user is authenticated and online, sync with Firebase
+      if (authStore.isAuthenticated && isOnline.value) {
+        syncWithFirebase();
+      }
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load properties';
     } finally {
@@ -146,27 +163,100 @@ export const usePropertiesStore = defineStore('properties', () => {
     }
   }
 
-  function createProperty(formData: PropertyFormData): Property {
-    const property: Property = {
-      id: crypto.randomUUID(),
-      zone: formData.zone,
-      price: formData.price || 0,
-      status: formData.status,
-      requirements: formData.requirements || [],
-      comments: formData.comments || '',
-      link: formData.link || '',
-      location: formData.location || '',
-      whatsapp: formData.whatsapp || '',
-      appointmentDate: formData.appointmentDate || undefined,
-      isCalendarScheduled: formData.isCalendarScheduled || false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
+  async function syncWithFirebase(): Promise<void> {
+    if (!authStore.user || !isOnline.value) return;
+    
     try {
+      isSyncing.value = true;
+      
+      // Get Firebase properties
+      const firebaseProperties = await firestoreService.getUserProperties(authStore.user.uid);
+      
+      // Merge with local properties, preferring newer ones
+      const mergedProperties = mergeProperties(properties.value, firebaseProperties);
+      
+      // Update both local and Firebase storage
+      properties.value = mergedProperties;
+      storageService.importProperties(mergedProperties);
+      
+      // Subscribe to real-time updates
+      subscribeToFirebaseUpdates();
+      
+      lastSyncTime.value = new Date();
+    } catch (err) {
+      console.error('Firebase sync failed:', err);
+      // Continue with local data on sync failure
+    } finally {
+      isSyncing.value = false;
+    }
+  }
+
+  function subscribeToFirebaseUpdates(): void {
+    if (!authStore.user || unsubscribeFromFirestore) return;
+    
+    unsubscribeFromFirestore = firestoreService.subscribeToUserProperties(
+      authStore.user.uid,
+      (firebaseProperties) => {
+        // Update local properties with Firebase changes
+        const mergedProperties = mergeProperties(properties.value, firebaseProperties);
+        properties.value = mergedProperties;
+        storageService.importProperties(mergedProperties);
+      }
+    );
+  }
+
+  function mergeProperties(localProps: Property[], firebaseProps: Property[]): Property[] {
+    const merged = new Map<string, Property>();
+    
+    // Add local properties
+    localProps.forEach(prop => merged.set(prop.id, prop));
+    
+    // Add/update with Firebase properties (prefer newer ones)
+    firebaseProps.forEach(prop => {
+      const existing = merged.get(prop.id);
+      if (!existing || prop.updatedAt > existing.updatedAt) {
+        merged.set(prop.id, prop);
+      }
+    });
+    
+    return Array.from(merged.values());
+  }
+
+  async function createProperty(formData: PropertyFormData): Promise<Property> {
+    try {
+      error.value = null;
+      
+      // Create property locally first
+      const property: Property = {
+        id: crypto.randomUUID(),
+        zone: formData.zone,
+        price: formData.price || 0,
+        status: formData.status,
+        requirements: formData.requirements || [],
+        comments: formData.comments || '',
+        link: formData.link || '',
+        location: formData.location || '',
+        whatsapp: formData.whatsapp || '',
+        appointmentDate: formData.appointmentDate || undefined,
+        isCalendarScheduled: formData.isCalendarScheduled || false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Save locally first
       storageService.saveProperty(property);
       properties.value.push(property);
-      error.value = null;
+      
+      // Sync with Firebase if authenticated and online
+      if (authStore.isAuthenticated && isOnline.value) {
+        try {
+          await firestoreService.createProperty(authStore.user!.uid, formData);
+        } catch (firebaseError) {
+          console.error('Firebase create failed:', firebaseError);
+          // Continue with local storage - sync will handle it later
+        }
+      }
+      
       return property;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to create property';
@@ -174,7 +264,7 @@ export const usePropertiesStore = defineStore('properties', () => {
     }
   }
 
-  function updateProperty(id: string, formData: PropertyFormData): Property {
+  async function updateProperty(id: string, formData: PropertyFormData): Promise<Property> {
     const existingProperty = properties.value.find(p => p.id === id);
     if (!existingProperty) {
       throw new Error('Property not found');
@@ -196,11 +286,23 @@ export const usePropertiesStore = defineStore('properties', () => {
     };
 
     try {
+      // Update locally first
       storageService.saveProperty(updatedProperty);
       const index = properties.value.findIndex(p => p.id === id);
       if (index >= 0) {
         properties.value[index] = updatedProperty;
       }
+      
+      // Sync with Firebase if authenticated and online
+      if (authStore.isAuthenticated && isOnline.value) {
+        try {
+          await firestoreService.updateProperty(id, formData);
+        } catch (firebaseError) {
+          console.error('Firebase update failed:', firebaseError);
+          // Continue with local storage - sync will handle it later
+        }
+      }
+      
       error.value = null;
       return updatedProperty;
     } catch (err) {
@@ -209,10 +311,22 @@ export const usePropertiesStore = defineStore('properties', () => {
     }
   }
 
-  function deleteProperty(id: string): void {
+  async function deleteProperty(id: string): Promise<void> {
     try {
+      // Delete locally first
       storageService.deleteProperty(id);
       properties.value = properties.value.filter(p => p.id !== id);
+      
+      // Sync with Firebase if authenticated and online
+      if (authStore.isAuthenticated && isOnline.value) {
+        try {
+          await firestoreService.deleteProperty(id);
+        } catch (firebaseError) {
+          console.error('Firebase delete failed:', firebaseError);
+          // Continue with local deletion - sync will handle it later
+        }
+      }
+      
       error.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to delete property';
@@ -274,7 +388,7 @@ export const usePropertiesStore = defineStore('properties', () => {
     return hasActiveFilters.value ? filteredProperties.value : properties.value;
   }
 
-  function markCalendarScheduled(id: string): void {
+  async function markCalendarScheduled(id: string): Promise<void> {
     try {
       const property = properties.value.find(p => p.id === id);
       if (!property) {
@@ -287,15 +401,34 @@ export const usePropertiesStore = defineStore('properties', () => {
         updatedAt: new Date()
       };
 
+      // Update locally first
       storageService.saveProperty(updatedProperty);
       const index = properties.value.findIndex(p => p.id === id);
       if (index >= 0) {
         properties.value[index] = updatedProperty;
       }
+      
+      // Sync with Firebase if authenticated and online
+      if (authStore.isAuthenticated && isOnline.value) {
+        try {
+          await firestoreService.markCalendarScheduled(id);
+        } catch (firebaseError) {
+          console.error('Firebase calendar update failed:', firebaseError);
+          // Continue with local update - sync will handle it later
+        }
+      }
+      
       error.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to mark calendar as scheduled';
       throw err;
+    }
+  }
+
+  function cleanup(): void {
+    if (unsubscribeFromFirestore) {
+      unsubscribeFromFirestore();
+      unsubscribeFromFirestore = null;
     }
   }
 
@@ -320,6 +453,8 @@ export const usePropertiesStore = defineStore('properties', () => {
     sort,
     isLoading,
     error,
+    isSyncing,
+    lastSyncTime,
     stats,
     hasActiveFilters,
     loadProperties,
@@ -335,6 +470,8 @@ export const usePropertiesStore = defineStore('properties', () => {
     exportProperties,
     markCalendarScheduled,
     setSortField,
-    setSortDirection
+    setSortDirection,
+    syncWithFirebase,
+    cleanup
   };
 });

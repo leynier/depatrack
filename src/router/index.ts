@@ -9,6 +9,11 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
+    {
+      path: '/auth/action',
+      name: 'auth-action',
+      component: () => import('../views/auth/AuthActionView.vue'),
+    },
   ],
 })
 

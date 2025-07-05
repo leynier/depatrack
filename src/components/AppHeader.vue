@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useTheme } from '@/composables/useTheme';
+import { useAuthStore } from '@/stores/auth';
 import { Button } from '@/components/ui/button';
-import { SunIcon, MoonIcon, ChartBarIcon } from '@heroicons/vue/24/outline';
+import { SunIcon, MoonIcon, ChartBarIcon, UserIcon } from '@heroicons/vue/24/outline';
 import StatsModal from '@/components/StatsModal.vue';
+import AuthDialog from '@/components/AuthDialog.vue';
+import UserProfile from '@/components/UserProfile.vue';
 
 const { theme, toggleTheme } = useTheme();
+const authStore = useAuthStore();
 const showStatsModal = ref(false);
+const showAuthDialog = ref(false);
 
 const getThemeIcon = () => {
   return theme.value === 'dark' ? SunIcon : MoonIcon;
@@ -22,6 +27,10 @@ const openGitHub = () => {
 
 const openStats = () => {
   showStatsModal.value = true;
+};
+
+const openAuth = () => {
+  showAuthDialog.value = true;
 };
 </script>
 
@@ -66,6 +75,19 @@ const openStats = () => {
           >
             <component :is="getThemeIcon()" class="h-4 w-4" />
           </Button>
+          
+          <!-- Auth Section -->
+          <UserProfile v-if="authStore.isAuthenticated" />
+          <Button
+            v-else
+            variant="outline"
+            size="icon"
+            @click="openAuth"
+            title="Sign In"
+            class="border-border hover:bg-muted"
+          >
+            <UserIcon class="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>
@@ -75,5 +97,10 @@ const openStats = () => {
   <StatsModal 
     v-model:open="showStatsModal" 
     @close="showStatsModal = false" 
+  />
+  
+  <!-- Auth Dialog -->
+  <AuthDialog 
+    v-model:open="showAuthDialog" 
   />
 </template>
