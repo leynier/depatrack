@@ -10,17 +10,18 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
 export const usePropertiesStore = defineStore('properties', () => {
-  const properties = ref<Property[]>([]);
-  const isLoading = ref(false);
-  const error = ref<string | null>(null);
-  const isSyncing = ref(false);
-  const lastSyncTime = ref<Date | null>(null);
-
   const storageService = StorageService.getInstance();
   const firestoreService = FirestoreService.getInstance();
   const authStore = useAuthStore();
   const { isOnline } = useNetworkStatus();
   const userSettings = useUserSettings();
+
+  const properties = ref<Property[]>([]);
+  const isLoading = ref(true); // Start with loading state
+  const error = ref<string | null>(null);
+  const isSyncing = ref(false);
+  const lastSyncTime = ref<Date | null>(null);
+  const isOperating = ref(false); // Track individual operations (create, update, delete)
 
   // Get filters and sort from user settings
   const filters = computed(() => userSettings.filters());
@@ -167,19 +168,21 @@ export const usePropertiesStore = defineStore('properties', () => {
       isLoading.value = true;
       error.value = null;
       
-      // Always load from localStorage first for immediate UI response
+      // Load from localStorage first
       properties.value = storageService.getAllProperties();
       
       // Assign UUIDs to existing properties that don't have them
       assignUuidsToExistingProperties();
       
-      // If user is authenticated and online, sync with Firebase
+      // Set loading to false after local data is loaded
+      isLoading.value = false;
+      
+      // If user is authenticated and online, sync with Firebase in background
       if (authStore.isAuthenticated && isOnline.value) {
         syncWithFirebase();
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load properties';
-    } finally {
       isLoading.value = false;
     }
   }
@@ -344,6 +347,7 @@ export const usePropertiesStore = defineStore('properties', () => {
 
   async function createProperty(formData: PropertyFormData): Promise<Property> {
     try {
+      isOperating.value = true;
       error.value = null;
       
       // Generate unique UUID for sync across devices
@@ -398,6 +402,8 @@ export const usePropertiesStore = defineStore('properties', () => {
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to create property';
       throw err;
+    } finally {
+      isOperating.value = false;
     }
   }
 
@@ -428,6 +434,8 @@ export const usePropertiesStore = defineStore('properties', () => {
     };
 
     try {
+      isOperating.value = true;
+      
       // Add to pending operations to prevent race conditions
       if (updatedProperty.uuid) {
         pendingOperations.value.add(updatedProperty.uuid);
@@ -472,11 +480,15 @@ export const usePropertiesStore = defineStore('properties', () => {
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to update property';
       throw err;
+    } finally {
+      isOperating.value = false;
     }
   }
 
   async function deleteProperty(id: string): Promise<void> {
     try {
+      isOperating.value = true;
+      
       const property = properties.value.find(p => p.id === id);
       if (!property) {
         throw new Error('Property not found');
@@ -529,6 +541,8 @@ export const usePropertiesStore = defineStore('properties', () => {
       }
       error.value = err instanceof Error ? err.message : 'Failed to delete property';
       throw err;
+    } finally {
+      isOperating.value = false;
     }
   }
 
@@ -728,6 +742,7 @@ export const usePropertiesStore = defineStore('properties', () => {
     filters,
     sort,
     isLoading,
+    isOperating,
     error,
     isSyncing,
     lastSyncTime,

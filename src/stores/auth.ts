@@ -13,30 +13,35 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => user.value !== null);
 
   async function initializeAuth(): Promise<void> {
-    isLoading.value = true;
-    
-    authService.onAuthStateChanged(async (authUser) => {
-      const wasAuthenticated = user.value !== null;
-      user.value = authUser;
-      isLoading.value = false;
+    return new Promise<void>((resolve) => {
+      isLoading.value = true;
       
-      // Set user ID for analytics
-      if (authUser) {
-        analyticsService.setUser(authUser.uid);
-      }
-      
-      // If user just authenticated, trigger properties and settings sync
-      if (!wasAuthenticated && authUser) {
-        // Dynamically import stores to avoid circular dependencies
-        const { usePropertiesStore } = await import('@/stores/properties');
-        const { useUserSettings } = await import('@/composables/useUserSettings');
-
-        const propertiesStore = usePropertiesStore();
-        await propertiesStore.syncWithFirebase();
+      authService.onAuthStateChanged(async (authUser) => {
+        const wasAuthenticated = user.value !== null;
+        user.value = authUser;
+        isLoading.value = false;
         
-        const userSettings = useUserSettings();
-        await userSettings.syncWithFirebase();
-      }
+        // Set user ID for analytics
+        if (authUser) {
+          analyticsService.setUser(authUser.uid);
+        }
+        
+        // If user just authenticated, trigger properties and settings sync
+        if (!wasAuthenticated && authUser) {
+          // Dynamically import stores to avoid circular dependencies
+          const { usePropertiesStore } = await import('@/stores/properties');
+          const { useUserSettings } = await import('@/composables/useUserSettings');
+
+          const propertiesStore = usePropertiesStore();
+          await propertiesStore.syncWithFirebase();
+          
+          const userSettings = useUserSettings();
+          await userSettings.syncWithFirebase();
+        }
+        
+        // Resolve the promise when auth state is determined
+        resolve();
+      });
     });
   }
 

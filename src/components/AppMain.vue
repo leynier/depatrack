@@ -7,6 +7,7 @@ import PropertyForm from '@/components/PropertyForm.vue';
 import FilterModal from '@/components/FilterModal.vue';
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue';
 import NotificationDialog from '@/components/NotificationDialog.vue';
+import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -343,8 +344,8 @@ defineExpose({
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="flex justify-center items-center h-64">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    <div v-if="isLoading">
+      <LoadingSpinner :message="t('loading.loadingProperties')" />
     </div>
 
     <!-- Empty State -->

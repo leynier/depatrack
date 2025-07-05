@@ -241,6 +241,18 @@
     "spanish": "Español",
     "selectLanguage": "Seleccionar Idioma"
   },
+  "sync": {
+    "processing": "Procesando...",
+    "syncing": "Sincronizando...",
+    "synced": "Sincronizado",
+    "syncedNow": "Sincronizado ahora",
+    "syncedMinutesAgo": "Sincronizado hace {minutes}m",
+    "syncedHoursAgo": "Sincronizado hace {hours}h",
+    "syncError": "Error de sincronización"
+  },
+  "loading": {
+    "loadingProperties": "Cargando propiedades..."
+  },
   "locale": {
     "dateFormat": "es-ES"
   }

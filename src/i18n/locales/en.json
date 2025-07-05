@@ -241,6 +241,18 @@
     "spanish": "Spanish",
     "selectLanguage": "Select Language"
   },
+  "sync": {
+    "processing": "Processing...",
+    "syncing": "Syncing...",
+    "synced": "Synced",
+    "syncedNow": "Synced now",
+    "syncedMinutesAgo": "Synced {minutes}m ago",
+    "syncedHoursAgo": "Synced {hours}h ago",
+    "syncError": "Sync error"
+  },
+  "loading": {
+    "loadingProperties": "Loading properties..."
+  },
   "locale": {
     "dateFormat": "en-US"
   }

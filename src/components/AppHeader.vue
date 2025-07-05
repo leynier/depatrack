@@ -9,6 +9,7 @@ import StatsModal from '@/components/StatsModal.vue';
 import AuthDialog from '@/components/AuthDialog.vue';
 import UserProfile from '@/components/UserProfile.vue';
 import LanguageSelector from '@/components/LanguageSelector.vue';
+import SyncIcon from '@/components/SyncIcon.vue';
 
 const { theme, toggleTheme } = useTheme();
 const authStore = useAuthStore();
@@ -42,7 +43,10 @@ const openAuth = () => {
     <div class="max-w-7xl mx-auto px-6 py-4">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-foreground sans-serif">{{ t('app.title') }}</h1>
+          <div class="flex items-center">
+            <h1 class="text-2xl font-bold text-foreground sans-serif">{{ t('app.title') }}</h1>
+            <SyncIcon />
+          </div>
           <p class="mt-1 text-sm text-muted-foreground leading-relaxed hidden md:block">
             {{ t('app.description') }}
           </p>

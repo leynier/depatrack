@@ -9,12 +9,14 @@ const propertiesStore = usePropertiesStore();
 const authStore = useAuthStore();
 const userSettings = useUserSettings();
 
-onMounted(() => {
+onMounted(async () => {
   // Initialize user settings first (loads theme, language, etc.)
   userSettings.loadSettings();
   
-  // Initialize auth, then load properties
-  authStore.initializeAuth();
+  // Initialize auth and wait for it to complete
+  await authStore.initializeAuth();
+  
+  // Then load properties with the correct user context
   propertiesStore.loadProperties();
   
   // Log page view
