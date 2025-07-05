@@ -1,4 +1,6 @@
-import { ref, computed } from 'vue'
+import { useUserSettings } from '@/composables/useUserSettings'
+import type { Language } from '@/types/user-settings'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const availableLocales = [
@@ -7,23 +9,22 @@ const availableLocales = [
 ]
 
 export function useLanguage() {
-  const { locale, t } = useI18n()
+  const { t } = useI18n()
+  const userSettings = useUserSettings()
   
-  const currentLocale = computed(() => locale.value)
+  const currentLocale = computed(() => userSettings.language())
   
   const currentLanguage = computed(() => {
-    const lang = availableLocales.find(l => l.code === locale.value)
+    const lang = availableLocales.find(l => l.code === userSettings.language())
     return lang?.name || 'English'
   })
   
-  const setLanguage = (newLocale: string) => {
-    locale.value = newLocale
-    localStorage.setItem('locale', newLocale)
+  const setLanguage = (newLocale: Language) => {
+    userSettings.setLanguage(newLocale)
   }
   
   const toggleLanguage = () => {
-    const newLocale = locale.value === 'en' ? 'es' : 'en'
-    setLanguage(newLocale)
+    userSettings.toggleLanguage()
   }
   
   return {

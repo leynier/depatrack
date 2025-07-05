@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { usePropertiesStore } from '@/stores/properties';
-import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { UserIcon, ArrowRightOnRectangleIcon, CloudIcon, CloudArrowUpIcon, WifiIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { useLanguage } from '@/composables/useLanguage';
+import { useNetworkStatus } from '@/composables/useNetworkStatus';
+import { useUserSettings } from '@/composables/useUserSettings';
+import { useAuthStore } from '@/stores/auth';
+import { usePropertiesStore } from '@/stores/properties';
+import { ArrowRightOnRectangleIcon, CloudArrowUpIcon, CloudIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
+import { computed, ref, unref } from 'vue';
 
 const authStore = useAuthStore();
 const propertiesStore = usePropertiesStore();
+const userSettings = useUserSettings();
 const { isOnline } = useNetworkStatus();
 const { t } = useLanguage();
 
@@ -22,13 +24,13 @@ const userInitials = computed(() => {
 
 const statusIcon = computed(() => {
   if (!isOnline.value) return ExclamationTriangleIcon;
-  if (propertiesStore.isSyncing) return CloudArrowUpIcon;
+  if (propertiesStore.isSyncing || unref(userSettings.isSyncing)) return CloudArrowUpIcon;
   return CloudIcon;
 });
 
 const statusText = computed(() => {
   if (!isOnline.value) return t('auth.offline');
-  if (propertiesStore.isSyncing) return t('auth.syncing');
+  if (propertiesStore.isSyncing || unref(userSettings.isSyncing)) return t('auth.syncing');
   return t('auth.online');
 });
 
@@ -54,14 +56,19 @@ const lastSyncText = computed(() => {
   return t('auth.daysAgo', { days });
 });
 
+const isSyncDisabled = computed(() => {
+  return !isOnline.value || propertiesStore.isSyncing || unref(userSettings.isSyncing);
+});
+
 async function handleLogout() {
   if (isLoggingOut.value) return;
   
   try {
     isLoggingOut.value = true;
     
-    // Clean up Firebase subscription
+    // Clean up Firebase subscriptions
     propertiesStore.cleanup();
+    userSettings.cleanup();
     
     // Logout from Firebase
     await authStore.logout();
@@ -73,9 +80,13 @@ async function handleLogout() {
 }
 
 async function handleSync() {
-  if (isOnline.value && !propertiesStore.isSyncing) {
+  if (isOnline.value && !propertiesStore.isSyncing && !unref(userSettings.isSyncing)) {
     try {
-      await propertiesStore.syncWithFirebase();
+      // Sync both properties and user settings
+      await Promise.all([
+        propertiesStore.syncWithFirebase(),
+        userSettings.syncWithFirebase()
+      ]);
     } catch (error) {
       console.error('Manual sync failed:', error);
     }
@@ -108,7 +119,7 @@ async function handleSync() {
       
       <DropdownMenuSeparator />
       
-      <DropdownMenuItem @click="handleSync" :disabled="!isOnline || propertiesStore.isSyncing">
+      <DropdownMenuItem @click="handleSync" :disabled="isSyncDisabled">
         <CloudArrowUpIcon class="h-4 w-4 mr-2" />
         {{ t('auth.syncNow') }}
       </DropdownMenuItem>

@@ -1,8 +1,7 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import { AuthService, type AuthUser, type LoginCredentials, type RegisterCredentials } from '@/services/auth';
 import { analyticsService } from '@/services/analytics';
-import { auth } from '@/config/firebase';
+import { AuthService, type AuthUser, type LoginCredentials, type RegisterCredentials } from '@/services/auth';
+import { defineStore } from 'pinia';
+import { computed, ref } from 'vue';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null);
@@ -26,12 +25,17 @@ export const useAuthStore = defineStore('auth', () => {
         analyticsService.setUser(authUser.uid);
       }
       
-      // If user just authenticated, trigger properties sync
+      // If user just authenticated, trigger properties and settings sync
       if (!wasAuthenticated && authUser) {
-        // Import properties store dynamically to avoid circular dependency
+        // Import stores dynamically to avoid circular dependency
         import('@/stores/properties').then(({ usePropertiesStore }) => {
           const propertiesStore = usePropertiesStore();
           propertiesStore.syncWithFirebase();
+        });
+        
+        import('@/composables/useUserSettings').then(({ useUserSettings }) => {
+          const userSettings = useUserSettings();
+          userSettings.syncWithFirebase();
         });
       }
     });

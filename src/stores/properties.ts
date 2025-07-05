@@ -1,17 +1,16 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import type { Property, PropertyFormData, PropertyFilters, PropertyStats, PropertySort, SortField, SortDirection } from '@/types/property';
-import { PROPERTY_STATUS_LABELS } from '@/types/property';
-import { StorageService } from '@/services/storage';
-import { FirestoreService } from '@/services/firestore';
-import { analyticsService } from '@/services/analytics';
-import { useAuthStore } from '@/stores/auth';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
+import { useUserSettings } from '@/composables/useUserSettings';
+import { analyticsService } from '@/services/analytics';
+import { FirestoreService } from '@/services/firestore';
+import { StorageService } from '@/services/storage';
+import { useAuthStore } from '@/stores/auth';
+import type { Property, PropertyFilters, PropertyFormData, PropertyStats, SortDirection, SortField } from '@/types/property';
+import { PROPERTY_STATUS_LABELS } from '@/types/property';
+import { defineStore } from 'pinia';
+import { computed, ref } from 'vue';
 
 export const usePropertiesStore = defineStore('properties', () => {
   const properties = ref<Property[]>([]);
-  const filters = ref<PropertyFilters>({});
-  const sort = ref<PropertySort>({ field: 'zone', direction: 'asc' });
   const isLoading = ref(false);
   const error = ref<string | null>(null);
   const isSyncing = ref(false);
@@ -21,6 +20,11 @@ export const usePropertiesStore = defineStore('properties', () => {
   const firestoreService = FirestoreService.getInstance();
   const authStore = useAuthStore();
   const { isOnline } = useNetworkStatus();
+  const userSettings = useUserSettings();
+
+  // Get filters and sort from user settings
+  const filters = computed(() => userSettings.filters());
+  const sort = computed(() => userSettings.sort());
 
   let unsubscribeFromFirestore: (() => void) | null = null;
 
@@ -469,7 +473,7 @@ export const usePropertiesStore = defineStore('properties', () => {
 
   function setFilters(newFilters: PropertyFilters): void {
     const oldFilters = { ...filters.value };
-    filters.value = { ...newFilters };
+    userSettings.setFilters(newFilters);
     
     // Log analytics events for filter changes
     if (newFilters.search && newFilters.search !== oldFilters.search) {
@@ -490,11 +494,13 @@ export const usePropertiesStore = defineStore('properties', () => {
   }
 
   function clearFilters(): void {
-    filters.value = {};
+    userSettings.setFilters({});
   }
 
   function clearSearch(): void {
-    filters.value = { ...filters.value, search: undefined };
+    const currentFilters = { ...filters.value };
+    delete currentFilters.search;
+    userSettings.setFilters(currentFilters);
   }
 
   function importProperties(newProperties: Property[]): void {
@@ -626,20 +632,25 @@ export const usePropertiesStore = defineStore('properties', () => {
       unsubscribeFromFirestore();
       unsubscribeFromFirestore = null;
     }
+    
+    // Cleanup user settings subscription as well
+    userSettings.cleanup();
   }
 
   function setSortField(field: SortField): void {
-    if (sort.value.field === field) {
+    const currentSort = sort.value;
+    if (currentSort.field === field) {
       // Toggle direction if same field
-      sort.value.direction = sort.value.direction === 'asc' ? 'desc' : 'asc';
+      userSettings.setSort({ field, direction: currentSort.direction === 'asc' ? 'desc' : 'asc' });
     } else {
       // Set new field with ascending direction
-      sort.value = { field, direction: 'asc' };
+      userSettings.setSort({ field, direction: 'asc' });
     }
   }
 
   function setSortDirection(direction: SortDirection): void {
-    sort.value.direction = direction;
+    const currentSort = sort.value;
+    userSettings.setSort({ field: currentSort.field, direction });
   }
 
   return {

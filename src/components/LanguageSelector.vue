@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { useLanguage } from '@/composables/useLanguage'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useLanguage } from '@/composables/useLanguage'
+import type { Language } from '@/types/user-settings'
 import { LanguageIcon } from '@heroicons/vue/24/outline'
 
 const { availableLocales, currentLocale, setLanguage, t } = useLanguage()
 
 const handleLanguageChange = (locale: string) => {
-  setLanguage(locale)
+  setLanguage(locale as Language)
 }
 </script>
 

@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { usePropertiesStore } from '@/stores/properties';
-import { useAuthStore } from '@/stores/auth';
-import { useTheme } from '@/composables/useTheme';
+import { useUserSettings } from '@/composables/useUserSettings';
 import { analyticsService } from '@/services/analytics';
-import AppHeader from '@/components/AppHeader.vue';
-import AppMain from '@/components/AppMain.vue';
+import { useAuthStore } from '@/stores/auth';
+import { usePropertiesStore } from '@/stores/properties';
+import { onMounted } from 'vue';
 
 const propertiesStore = usePropertiesStore();
 const authStore = useAuthStore();
-useTheme(); // Initialize theme system
+const userSettings = useUserSettings();
 
 onMounted(() => {
-  // Initialize auth first, then load properties
+  // Initialize user settings first (loads theme, language, etc.)
+  userSettings.loadSettings();
+  
+  // Initialize auth, then load properties
   authStore.initializeAuth();
   propertiesStore.loadProperties();
   
