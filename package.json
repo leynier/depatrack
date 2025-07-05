@@ -10,10 +10,10 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "ruler": "ruler apply",
-    "firebase:emulators": "firebase emulators:start",
-    "firebase:deploy": "bun run build && firebase deploy",
-    "firebase:deploy:hosting": "bun run build && firebase deploy --only hosting",
-    "firebase:deploy:rules": "firebase deploy --only firestore:rules"
+    "firebase:emulators": "npx firebase-tools emulators:start",
+    "firebase:deploy": "bun run build && npx firebase-tools deploy",
+    "firebase:deploy:hosting": "bun run build && npx firebase-tools deploy --only hosting",
+    "firebase:deploy:rules": "npx firebase-tools deploy --only firestore:rules"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
@@ -38,7 +38,6 @@
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.21",
-    "firebase-tools": "^14.9.0",
     "npm-run-all2": "^8.0.4",
     "postcss": "^8.5.6",
     "shadcn-vue": "^2.2.0",

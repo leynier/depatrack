@@ -5,6 +5,8 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   sendEmailVerification,
+  signInWithPopup,
+  GoogleAuthProvider,
   type User,
   type AuthError
 } from 'firebase/auth';
@@ -29,6 +31,7 @@ export interface RegisterCredentials {
 
 export class AuthService {
   private static instance: AuthService;
+  private googleProvider: GoogleAuthProvider;
   
   static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -37,7 +40,11 @@ export class AuthService {
     return AuthService.instance;
   }
 
-  private constructor() {}
+  private constructor() {
+    this.googleProvider = new GoogleAuthProvider();
+    this.googleProvider.addScope('email');
+    this.googleProvider.addScope('profile');
+  }
 
   async login(credentials: LoginCredentials): Promise<AuthUser> {
     try {
@@ -54,6 +61,15 @@ export class AuthService {
       }
       
       return this.mapFirebaseUser(userCredential.user);
+    } catch (error) {
+      throw this.handleAuthError(error as AuthError);
+    }
+  }
+
+  async signInWithGoogle(): Promise<AuthUser> {
+    try {
+      const result = await signInWithPopup(auth, this.googleProvider);
+      return this.mapFirebaseUser(result.user);
     } catch (error) {
       throw this.handleAuthError(error as AuthError);
     }

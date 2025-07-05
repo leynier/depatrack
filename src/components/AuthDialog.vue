@@ -27,6 +27,7 @@ const confirmPassword = ref('');
 const isSubmitting = ref(false);
 const resetEmailSent = ref(false);
 const showVerificationMessage = ref(false);
+const isGoogleSignIn = ref(false);
 
 const dialogOpen = computed({
   get: () => props.open,
@@ -116,6 +117,22 @@ async function handleSubmit() {
   }
 }
 
+async function handleGoogleSignIn() {
+  try {
+    isGoogleSignIn.value = true;
+    authStore.clearError();
+    
+    await authStore.signInWithGoogle();
+    dialogOpen.value = false;
+    resetForm();
+  } catch (error) {
+    // Error is handled by the store
+    console.error('Google sign in error:', error);
+  } finally {
+    isGoogleSignIn.value = false;
+  }
+}
+
 function switchMode() {
   switch (mode.value) {
     case 'login':
@@ -144,6 +161,7 @@ function resetForm() {
   password.value = '';
   confirmPassword.value = '';
   resetEmailSent.value = false;
+  isGoogleSignIn.value = false;
 }
 
 function handleOpenChange(open: boolean) {
@@ -190,8 +208,43 @@ function handleOpenChange(open: boolean) {
           </Button>
         </div>
 
+        <!-- Google Sign In Button (for login and register modes) -->
+        <div v-if="mode === 'login' || mode === 'register'" class="space-y-3">
+          <Button
+            variant="outline"
+            class="w-full"
+            @click="handleGoogleSignIn"
+            :disabled="isSubmitting || isGoogleSignIn"
+          >
+            <svg
+              class="mr-2 h-4 w-4"
+              aria-hidden="true"
+              focusable="false"
+              data-prefix="fab"
+              data-icon="google"
+              role="img"
+              viewBox="0 0 488 512"
+            >
+              <path
+                fill="currentColor"
+                d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h240z"
+              />
+            </svg>
+            {{ isGoogleSignIn ? 'Please wait...' : (mode === 'register' ? 'Sign up with Google' : 'Continue with Google') }}
+          </Button>
+
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center">
+              <span class="w-full border-t border-border" />
+            </div>
+            <div class="relative flex justify-center text-xs uppercase">
+              <span class="bg-background px-2 text-muted-foreground">Or continue with email</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Form -->
-        <form v-else @submit.prevent="handleSubmit" class="space-y-4">
+        <form v-if="!resetEmailSent" @submit.prevent="handleSubmit" class="space-y-4">
           <div class="space-y-2">
             <Label for="email">Email</Label>
             <Input
@@ -247,7 +300,7 @@ function handleOpenChange(open: boolean) {
           <Button
             type="submit"
             class="w-full"
-            :disabled="!isFormValid || isSubmitting"
+            :disabled="!isFormValid || isSubmitting || isGoogleSignIn"
           >
             {{ isSubmitting ? 'Please wait...' : submitText }}
           </Button>

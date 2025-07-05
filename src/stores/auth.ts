@@ -36,6 +36,21 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function signInWithGoogle(): Promise<void> {
+    try {
+      isLoading.value = true;
+      error.value = null;
+      
+      const authUser = await authService.signInWithGoogle();
+      user.value = authUser;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Google sign in failed';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   async function register(credentials: RegisterCredentials): Promise<void> {
     try {
       isLoading.value = true;
@@ -91,6 +106,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     initializeAuth,
     login,
+    signInWithGoogle,
     register,
     logout,
     sendPasswordReset,
