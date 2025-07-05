@@ -1,7 +1,8 @@
+import { useAuthStore } from '@/stores/auth';
 import type { Property } from '@/types/property';
 
-const STORAGE_KEY = 'depatrack_properties';
-const DELETED_PROPERTIES_KEY = 'depatrack_deleted_properties';
+const STORAGE_KEY_PREFIX = 'depatrack_properties_';
+const DELETED_PROPERTIES_PREFIX = 'depatrack_deleted_properties_';
 const VERSION_KEY = 'depatrack_version';
 const CURRENT_VERSION = '1.0.0';
 
@@ -62,9 +63,22 @@ export class StorageService {
     }
   }
 
+  private getCurrentUserId(): string {
+    const authStore = useAuthStore();
+    return authStore?.user?.uid || 'guest';
+  }
+
+  private getStorageKey(): string {
+    return `${STORAGE_KEY_PREFIX}${this.getCurrentUserId()}`;
+  }
+
+  private getDeletedKey(): string {
+    return `${DELETED_PROPERTIES_PREFIX}${this.getCurrentUserId()}`;
+  }
+
   private getRawData(): any {
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const data = localStorage.getItem(this.getStorageKey());
       return data ? JSON.parse(data) : null;
     } catch (error) {
       console.error('Error reading from localStorage:', error);
@@ -74,7 +88,7 @@ export class StorageService {
 
   private saveData(properties: Property[]): void {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(properties));
+      localStorage.setItem(this.getStorageKey(), JSON.stringify(properties));
     } catch (error) {
       console.error('Error saving to localStorage:', error);
       throw new Error('Failed to save data to local storage');
@@ -83,7 +97,7 @@ export class StorageService {
 
   private saveDeletedPropertyUuids(uuids: string[]): void {
     try {
-      localStorage.setItem(DELETED_PROPERTIES_KEY, JSON.stringify(uuids));
+      localStorage.setItem(this.getDeletedKey(), JSON.stringify(uuids));
     } catch (error) {
       console.error('Error saving deleted property UUIDs to localStorage:', error);
     }
@@ -91,7 +105,7 @@ export class StorageService {
 
   getDeletedPropertyUuids(): string[] {
     try {
-      const data = localStorage.getItem(DELETED_PROPERTIES_KEY);
+      const data = localStorage.getItem(this.getDeletedKey());
       return data ? JSON.parse(data) : [];
     } catch (error) {
       console.error('Error reading deleted property UUIDs from localStorage:', error);
@@ -108,17 +122,39 @@ export class StorageService {
   }
 
   clearDeletedPropertyUuids(): void {
-    localStorage.removeItem(DELETED_PROPERTIES_KEY);
+    localStorage.removeItem(this.getDeletedKey());
   }
 
   getAllProperties(): Property[] {
     try {
-      const data = this.getRawData();
-      if (!data || !Array.isArray(data)) {
-        return [];
+      // Datos del usuario actual
+      const userData = this.getRawData();
+      let properties: Property[] = Array.isArray(userData) ? userData : [];
+
+      // Si el usuario NO es invitado, intentamos fusionar datos del invitado
+      const currentUserId = this.getCurrentUserId();
+      if (currentUserId !== 'guest') {
+        try {
+          const guestRaw = localStorage.getItem(`${STORAGE_KEY_PREFIX}guest`);
+          if (guestRaw) {
+            const guestData: Property[] = JSON.parse(guestRaw);
+
+            // Combinar evitando duplicados (por uuid)
+            const combinedMap = new Map<string, Property>();
+            [...guestData, ...properties].forEach(p => combinedMap.set(p.uuid, p));
+            properties = Array.from(combinedMap.values());
+
+            // Guardar fusionado en la clave del usuario y limpiar la del invitado
+            this.saveData(properties);
+            localStorage.removeItem(`${STORAGE_KEY_PREFIX}guest`);
+            localStorage.removeItem(`${DELETED_PROPERTIES_PREFIX}guest`);
+          }
+        } catch (mergeError) {
+          console.error('Failed to merge guest data:', mergeError);
+        }
       }
-      
-      return data.map(property => ({
+
+      return properties.map(property => ({
         ...property,
         createdAt: new Date(property.createdAt),
         updatedAt: new Date(property.updatedAt),
@@ -168,7 +204,7 @@ export class StorageService {
   }
 
   clearAllData(): void {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(VERSION_KEY);
+    localStorage.removeItem(this.getStorageKey());
+    localStorage.removeItem(this.getDeletedKey());
   }
 }

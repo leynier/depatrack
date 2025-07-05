@@ -111,6 +111,10 @@ export const useAuthStore = defineStore('auth', () => {
       const propertiesStore = usePropertiesStore();
       propertiesStore.cleanup();
       
+      // Limpiar datos locales asociados al usuario que cierra sesión
+      const { StorageService } = await import('@/services/storage');
+      StorageService.getInstance().clearAllData();
+      
       await authService.logout();
       
       // Log analytics event
