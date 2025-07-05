@@ -22,6 +22,20 @@ bun install
 bun run dev
 ```
 
+### Environment Variables
+
+Create a `.env` file at the project root with your Firebase configuration:
+
+```env
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-auth-domain
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-storage-bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+VITE_FIREBASE_APP_ID=your-app-id
+VITE_FIREBASE_MEASUREMENT_ID=your-measurement-id
+```
+
 ### Available Scripts
 
 - `bun run dev` - Start development server
