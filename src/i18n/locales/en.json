@@ -32,11 +32,14 @@
     "statistics": "Statistics",
     "profile": "Profile",
     "settings": "Settings",
-    "github": "View on GitHub"
+    "github": "View on GitHub",
+    "githubShort": "GitHub"
   },
   "theme": {
     "light": "Switch to light mode",
-    "dark": "Switch to dark mode"
+    "dark": "Switch to dark mode",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode"
   },
   "auth": {
     "signIn": "Sign In",
