@@ -119,7 +119,7 @@ function toggleCalendarStatus() {
 </script>
 
 <template>
-  <div class="bg-card border border-border rounded-md p-4 space-y-3">
+  <div class="bg-background border border-border rounded-md p-4 space-y-3">
     <!-- Main Info (Always Visible) -->
     <div class="flex items-start justify-between">
       <div class="flex-1">

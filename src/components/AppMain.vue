@@ -414,7 +414,7 @@ defineExpose({
         size="icon" 
         @click="handleImportClick"
         :disabled="isImporting"
-        class="h-14 w-14 rounded-full shadow-lg bg-card border-border hover:bg-muted"
+        class="h-14 w-14 rounded-full shadow-lg bg-background border-border hover:bg-muted"
         :title="t('import.title')"
       >
         <ArrowUpTrayIcon class="h-5 w-5" />
@@ -425,7 +425,7 @@ defineExpose({
         variant="outline" 
         size="icon" 
         @click="handleExport"
-        class="h-14 w-14 rounded-full shadow-lg bg-card border-border hover:bg-muted"
+        class="h-14 w-14 rounded-full shadow-lg bg-background border-border hover:bg-muted"
         :title="t('export.title')"
       >
         <ArrowDownTrayIcon class="h-5 w-5" />
