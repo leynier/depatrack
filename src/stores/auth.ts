@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { AuthService, type AuthUser, type LoginCredentials, type RegisterCredentials } from '@/services/auth';
+import { analyticsService } from '@/services/analytics';
 import { auth } from '@/config/firebase';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -20,6 +21,11 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = authUser;
       isLoading.value = false;
       
+      // Set user ID for analytics
+      if (authUser) {
+        analyticsService.setUser(authUser.uid);
+      }
+      
       // If user just authenticated, trigger properties sync
       if (!wasAuthenticated && authUser) {
         // Import properties store dynamically to avoid circular dependency
@@ -38,6 +44,9 @@ export const useAuthStore = defineStore('auth', () => {
       
       const authUser = await authService.login(credentials);
       user.value = authUser;
+      
+      // Log analytics event
+      analyticsService.logLogin('email');
       
       // Trigger properties sync after successful login
       import('@/stores/properties').then(({ usePropertiesStore }) => {
@@ -59,6 +68,9 @@ export const useAuthStore = defineStore('auth', () => {
       
       const authUser = await authService.signInWithGoogle();
       user.value = authUser;
+      
+      // Log analytics event
+      analyticsService.logLogin('google');
       
       // Trigger properties sync after successful Google login
       import('@/stores/properties').then(({ usePropertiesStore }) => {
@@ -100,6 +112,10 @@ export const useAuthStore = defineStore('auth', () => {
       });
       
       await authService.logout();
+      
+      // Log analytics event
+      analyticsService.logLogout();
+      
       user.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Logout failed';

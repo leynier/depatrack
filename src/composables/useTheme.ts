@@ -1,4 +1,5 @@
 import { ref, onMounted, watch } from 'vue'
+import { analyticsService } from '@/services/analytics'
 
 type Theme = 'light' | 'dark'
 
@@ -62,11 +63,18 @@ export function useTheme() {
   })
 
   const setTheme = (theme: Theme) => {
-    currentTheme.value = theme
+    const oldTheme = currentTheme.value;
+    currentTheme.value = theme;
+    
+    // Log analytics event if theme actually changed
+    if (oldTheme !== theme && !isInitialLoad) {
+      analyticsService.logThemeChange(theme);
+    }
   }
 
   const toggleTheme = () => {
-    currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
+    const newTheme = currentTheme.value === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
   }
 
   return {

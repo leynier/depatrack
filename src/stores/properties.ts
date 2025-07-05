@@ -4,6 +4,7 @@ import type { Property, PropertyFormData, PropertyFilters, PropertyStats, Proper
 import { PROPERTY_STATUS_LABELS } from '@/types/property';
 import { StorageService } from '@/services/storage';
 import { FirestoreService } from '@/services/firestore';
+import { analyticsService } from '@/services/analytics';
 import { useAuthStore } from '@/stores/auth';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 
@@ -171,6 +172,8 @@ export const usePropertiesStore = defineStore('properties', () => {
     
     try {
       isSyncing.value = true;
+      const syncStartTime = Date.now();
+      analyticsService.logSyncStart();
       
       // Get Firebase properties
       const firebaseProperties = await firestoreService.getUserProperties(authStore.user.uid);
@@ -195,8 +198,13 @@ export const usePropertiesStore = defineStore('properties', () => {
       subscribeToFirebaseUpdates();
       
       lastSyncTime.value = new Date();
+      
+      // Log successful sync
+      const syncDuration = Date.now() - syncStartTime;
+      analyticsService.logSyncComplete(syncDuration, properties.value.length);
     } catch (err) {
       console.error('Firebase sync failed:', err);
+      analyticsService.logSyncError(err instanceof Error ? err.message : 'Unknown sync error');
       // Continue with local data on sync failure
     } finally {
       isSyncing.value = false;
@@ -324,6 +332,13 @@ export const usePropertiesStore = defineStore('properties', () => {
       storageService.saveProperty(property);
       properties.value.push(property);
       
+      // Log analytics event
+      analyticsService.logPropertyCreate({
+        zone: property.zone,
+        price: property.price,
+        status: property.status
+      });
+      
       // Sync with Firebase if authenticated and online
       if (authStore.isAuthenticated && isOnline.value) {
         try {
@@ -375,6 +390,18 @@ export const usePropertiesStore = defineStore('properties', () => {
         properties.value[index] = updatedProperty;
       }
       
+      // Log analytics event
+      analyticsService.logPropertyUpdate({
+        zone: updatedProperty.zone,
+        price: updatedProperty.price,
+        status: updatedProperty.status
+      });
+      
+      // Check for status change
+      if (existingProperty.status !== updatedProperty.status) {
+        analyticsService.logPropertyStatusChange(existingProperty.status, updatedProperty.status);
+      }
+      
       // Sync with Firebase if authenticated and online
       if (authStore.isAuthenticated && isOnline.value && updatedProperty.uuid) {
         try {
@@ -408,6 +435,13 @@ export const usePropertiesStore = defineStore('properties', () => {
       storageService.deleteProperty(id);
       properties.value = properties.value.filter(p => p.id !== id);
       
+      // Log analytics event
+      analyticsService.logPropertyDelete({
+        zone: property.zone,
+        price: property.price,
+        status: property.status
+      });
+      
       // Sync with Firebase if authenticated and online
       if (authStore.isAuthenticated && isOnline.value && property.uuid) {
         try {
@@ -434,7 +468,25 @@ export const usePropertiesStore = defineStore('properties', () => {
   }
 
   function setFilters(newFilters: PropertyFilters): void {
+    const oldFilters = { ...filters.value };
     filters.value = { ...newFilters };
+    
+    // Log analytics events for filter changes
+    if (newFilters.search && newFilters.search !== oldFilters.search) {
+      analyticsService.logPropertySearch(newFilters.search, filteredProperties.value.length);
+    }
+    
+    if (newFilters.minPrice !== oldFilters.minPrice) {
+      analyticsService.logPropertyFilter('min_price', newFilters.minPrice);
+    }
+    
+    if (newFilters.maxPrice !== oldFilters.maxPrice) {
+      analyticsService.logPropertyFilter('max_price', newFilters.maxPrice);
+    }
+    
+    if (JSON.stringify(newFilters.statuses) !== JSON.stringify(oldFilters.statuses)) {
+      analyticsService.logPropertyFilter('status', newFilters.statuses);
+    }
   }
 
   function clearFilters(): void {
@@ -456,6 +508,10 @@ export const usePropertiesStore = defineStore('properties', () => {
       
       storageService.importProperties(propertiesWithUuids);
       properties.value = propertiesWithUuids;
+      
+      // Log analytics event
+      analyticsService.logPropertyImport(propertiesWithUuids.length, 'csv');
+      
       error.value = null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to import properties';
@@ -488,7 +544,12 @@ export const usePropertiesStore = defineStore('properties', () => {
   }
 
   function exportProperties(): Property[] {
-    return hasActiveFilters.value ? filteredProperties.value : properties.value;
+    const propertiesToExport = hasActiveFilters.value ? filteredProperties.value : properties.value;
+    
+    // Log analytics event
+    analyticsService.logPropertyExport(propertiesToExport.length, 'csv');
+    
+    return propertiesToExport;
   }
 
   async function markCalendarScheduled(id: string): Promise<void> {
@@ -515,6 +576,12 @@ export const usePropertiesStore = defineStore('properties', () => {
       if (index >= 0) {
         properties.value[index] = updatedProperty;
       }
+      
+      // Log analytics event
+      analyticsService.logCalendarSchedule({
+        zone: updatedProperty.zone,
+        status: updatedProperty.status
+      });
       
       // Sync with Firebase if authenticated and online
       if (authStore.isAuthenticated && isOnline.value && updatedProperty.uuid) {
