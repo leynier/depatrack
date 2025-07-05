@@ -6,9 +6,11 @@ import { auth } from '@/config/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLanguage } from '@/composables/useLanguage';
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useLanguage();
 
 const loading = ref(true);
 const step = ref<'verify' | 'reset' | 'success' | 'error'>('verify');
@@ -22,7 +24,7 @@ const actionCode = route.query.oobCode as string;
 
 onMounted(async () => {
   if (!actionCode) {
-    error.value = 'Invalid password reset link';
+    error.value = t('auth.invalidPasswordResetLink');
     step.value = 'error';
     loading.value = false;
     return;
@@ -34,16 +36,16 @@ onMounted(async () => {
   } catch (err: any) {
     switch (err.code) {
       case 'auth/expired-action-code':
-        error.value = 'Password reset link has expired. Please request a new one.';
+        error.value = t('auth.expiredPasswordResetLink');
         break;
       case 'auth/invalid-action-code':
-        error.value = 'Invalid password reset link. Please check your email.';
+        error.value = t('auth.invalidPasswordResetLinkCheckEmail');
         break;
       case 'auth/user-disabled':
-        error.value = 'Your account has been disabled.';
+        error.value = t('auth.accountDisabled');
         break;
       default:
-        error.value = 'Invalid password reset link.';
+        error.value = t('auth.invalidPasswordResetLink');
     }
     step.value = 'error';
   } finally {
@@ -53,12 +55,12 @@ onMounted(async () => {
 
 const resetPassword = async () => {
   if (newPassword.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match';
+    error.value = t('auth.passwordsDoNotMatch');
     return;
   }
 
   if (newPassword.value.length < 6) {
-    error.value = 'Password must be at least 6 characters';
+    error.value = t('auth.passwordTooShort');
     return;
   }
 
@@ -71,13 +73,13 @@ const resetPassword = async () => {
   } catch (err: any) {
     switch (err.code) {
       case 'auth/weak-password':
-        error.value = 'Password is too weak. Please choose a stronger password.';
+        error.value = t('auth.passwordTooWeak');
         break;
       case 'auth/expired-action-code':
-        error.value = 'Password reset link has expired. Please request a new one.';
+        error.value = t('auth.expiredPasswordResetLink');
         break;
       default:
-        error.value = 'Failed to reset password. Please try again.';
+        error.value = t('auth.failedToResetPassword');
     }
   } finally {
     isSubmitting.value = false;
@@ -97,37 +99,37 @@ const goToLogin = () => {
         <div class="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
           <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
-        <h2 class="text-2xl font-bold text-foreground">Verifying reset link...</h2>
-        <p class="text-muted-foreground">Please wait while we verify your password reset link.</p>
+        <h2 class="text-2xl font-bold text-foreground">{{ t('auth.verifyingResetLink') }}</h2>
+        <p class="text-muted-foreground">{{ t('auth.verifyingResetLinkMessage') }}</p>
       </div>
 
       <!-- Reset Password Form -->
       <div v-else-if="step === 'reset'" class="space-y-6">
         <div class="text-center space-y-2">
-          <h2 class="text-2xl font-bold text-foreground">Reset Password</h2>
-          <p class="text-muted-foreground">Enter your new password for {{ email }}</p>
+          <h2 class="text-2xl font-bold text-foreground">{{ t('auth.resetPassword') }}</h2>
+          <p class="text-muted-foreground">{{ t('auth.enterNewPasswordFor', { email: email }) }}</p>
         </div>
 
         <form @submit.prevent="resetPassword" class="space-y-4">
           <div class="space-y-2">
-            <Label for="newPassword">New Password</Label>
+            <Label for="newPassword">{{ t('auth.newPassword') }}</Label>
             <Input
               id="newPassword"
               v-model="newPassword"
               type="password"
-              placeholder="Enter new password"
+              :placeholder="t('auth.enterNewPassword')"
               required
               :disabled="isSubmitting"
             />
           </div>
 
           <div class="space-y-2">
-            <Label for="confirmPassword">Confirm Password</Label>
+            <Label for="confirmPassword">{{ t('auth.confirmPassword') }}</Label>
             <Input
               id="confirmPassword"
               v-model="confirmPassword"
               type="password"
-              placeholder="Confirm new password"
+              :placeholder="t('auth.confirmNewPassword')"
               required
               :disabled="isSubmitting"
             />
@@ -142,7 +144,7 @@ const goToLogin = () => {
             class="w-full"
             :disabled="isSubmitting || !newPassword || !confirmPassword"
           >
-            {{ isSubmitting ? 'Resetting...' : 'Reset Password' }}
+            {{ isSubmitting ? t('auth.resetting') : t('auth.resetPassword') }}
           </Button>
         </form>
       </div>
@@ -156,14 +158,14 @@ const goToLogin = () => {
         </div>
         
         <div class="space-y-2">
-          <h2 class="text-2xl font-bold text-foreground">Password Reset Successful!</h2>
+          <h2 class="text-2xl font-bold text-foreground">{{ t('auth.passwordResetSuccessful') }}</h2>
           <p class="text-muted-foreground">
-            Your password has been reset successfully. You can now sign in with your new password.
+            {{ t('auth.passwordResetSuccessfulMessage') }}
           </p>
         </div>
 
         <Button @click="goToLogin" class="w-full">
-          Sign In to DepaTrack
+          {{ t('auth.signInToDepaTrack') }}
         </Button>
       </div>
 
@@ -176,19 +178,19 @@ const goToLogin = () => {
         </div>
         
         <div class="space-y-2">
-          <h2 class="text-2xl font-bold text-foreground">Reset Failed</h2>
+          <h2 class="text-2xl font-bold text-foreground">{{ t('auth.resetFailedTitle') }}</h2>
           <p class="text-muted-foreground">{{ error }}</p>
         </div>
 
         <Button @click="goToLogin" variant="outline" class="w-full">
-          Back to DepaTrack
+          {{ t('auth.backToDepaTrack') }}
         </Button>
       </div>
 
       <!-- DepaTrack Branding -->
       <div class="pt-8 border-t border-border text-center">
-        <h3 class="text-lg font-semibold text-foreground">DepaTrack</h3>
-        <p class="text-sm text-muted-foreground">Property Tracking Made Simple</p>
+        <h3 class="text-lg font-semibold text-foreground">{{ t('app.title') }}</h3>
+        <p class="text-sm text-muted-foreground">{{ t('app.tagline') }}</p>
       </div>
     </div>
   </div>

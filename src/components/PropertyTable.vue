@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useLanguage } from '@/composables/useLanguage';
 import { computed } from 'vue';
 import { usePropertiesStore } from '@/stores/properties';
 import { formatCurrency } from '@/utils/currency';
@@ -23,6 +24,7 @@ const emit = defineEmits<{
   calendarScheduled: [property: Property];
 }>();
 
+const { t } = useLanguage();
 const propertiesStore = usePropertiesStore();
 
 function handleEdit(id: string) {
@@ -142,7 +144,7 @@ function getSortIcon(field: SortField) {
               @click="handleSort('zone')"
               class="flex items-center gap-1 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
             >
-              Zone
+              {{ t('property.zone') }}
               <component :is="getSortIcon('zone')" v-if="getSortIcon('zone')" class="h-3 w-3" />
             </button>
           </TableHead>
@@ -151,7 +153,7 @@ function getSortIcon(field: SortField) {
               @click="handleSort('price')"
               class="flex items-center gap-1 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors w-full justify-end"
             >
-              Price
+              {{ t('property.price') }}
               <component :is="getSortIcon('price')" v-if="getSortIcon('price')" class="h-3 w-3" />
             </button>
           </TableHead>
@@ -160,7 +162,7 @@ function getSortIcon(field: SortField) {
               @click="handleSort('status')"
               class="flex items-center gap-1 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors w-full justify-center"
             >
-              Status
+              {{ t('property.status') }}
               <component :is="getSortIcon('status')" v-if="getSortIcon('status')" class="h-3 w-3" />
             </button>
           </TableHead>
@@ -169,14 +171,14 @@ function getSortIcon(field: SortField) {
               @click="handleSort('appointmentDate')"
               class="flex items-center gap-1 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors w-full justify-center"
             >
-              Appointment
+              {{ t('property.appointment') }}
               <component :is="getSortIcon('appointmentDate')" v-if="getSortIcon('appointmentDate')" class="h-3 w-3" />
             </button>
           </TableHead>
-          <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">Requirements</TableHead>
-          <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">Comments</TableHead>
-          <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-20 px-6 text-muted-foreground">Links</TableHead>
-          <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-20 px-6 text-muted-foreground">Actions</TableHead>
+          <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">{{ t('property.requirements') }}</TableHead>
+          <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">{{ t('property.comments') }}</TableHead>
+          <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-20 px-6 text-muted-foreground">{{ t('property.links') }}</TableHead>
+          <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-20 px-6 text-muted-foreground">{{ t('common.actions') }}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody class="bg-background divide-y divide-border">
@@ -193,7 +195,7 @@ function getSortIcon(field: SortField) {
           
           <TableCell class="py-4 px-6 text-center">
             <Badge :class="PROPERTY_STATUS_COLORS[property.status]">
-              {{ PROPERTY_STATUS_LABELS[property.status] }}
+              {{ t(`status.${property.status}`) }}
             </Badge>
           </TableCell>
 
@@ -207,7 +209,7 @@ function getSortIcon(field: SortField) {
                   variant="outline"
                   size="sm"
                   @click="() => handleCalendarSchedule(property)"
-                  title="Open Google Calendar"
+                  :title="t('property.openGoogleCalendar')"
                   class="text-xs px-2 py-1 h-6"
                 >
                   <CalendarIcon class="h-3 w-3" />
@@ -217,7 +219,7 @@ function getSortIcon(field: SortField) {
                   size="sm"
                   @click="() => toggleCalendarStatus(property)"
                   :class="property.isCalendarScheduled ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-900 dark:border-green-700 dark:text-green-100' : ''"
-                  :title="property.isCalendarScheduled ? 'Mark as not scheduled' : 'Mark as scheduled'"
+                  :title="property.isCalendarScheduled ? t('property.markAsNotScheduled') : t('property.markAsScheduled')"
                   class="text-xs px-1 py-1 h-6 w-6"
                 >
                   {{ property.isCalendarScheduled ? '✓' : '○' }}
@@ -257,7 +259,7 @@ function getSortIcon(field: SortField) {
                 variant="outline"
                 size="icon"
                 @click="openLink(property.link)"
-                title="Open link"
+                :title="t('property.openLink')"
                 class="h-8 w-8 border-border hover:bg-muted"
               >
                 <GlobeAltIcon class="h-4 w-4" />
@@ -267,7 +269,7 @@ function getSortIcon(field: SortField) {
                 variant="outline"
                 size="icon"
                 @click="openLocation(property.location)"
-                title="Open location"
+                :title="t('property.openLocation')"
                 class="h-8 w-8 border-border hover:bg-muted"
               >
                 <MapPinIcon class="h-4 w-4" />
@@ -277,7 +279,7 @@ function getSortIcon(field: SortField) {
                 variant="outline"
                 size="icon"
                 @click="openWhatsApp(property.whatsapp)"
-                title="Open WhatsApp"
+                :title="t('property.openWhatsApp')"
                 class="h-8 w-8 border-border hover:bg-muted"
               >
                 <ChatBubbleOvalLeftIcon class="h-4 w-4" />
@@ -291,7 +293,7 @@ function getSortIcon(field: SortField) {
                 variant="outline"
                 size="icon"
                 @click="handleEdit(property.id)"
-                title="Edit property"
+                :title="t('property.editProperty')"
                 class="h-8 w-8 border-border hover:bg-muted"
               >
                 <PencilIcon class="h-4 w-4" />
@@ -300,7 +302,7 @@ function getSortIcon(field: SortField) {
                 variant="outline"
                 size="icon"
                 @click="handleDelete(property)"
-                title="Delete property"
+                :title="t('property.deleteProperty')"
                 class="h-8 w-8 border-border hover:bg-muted"
               >
                 <TrashIcon class="h-4 w-4" />

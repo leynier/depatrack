@@ -8,6 +8,7 @@ import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, ChevronDownIcon, Chevr
 import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/solid';
 import { openGoogleCalendar } from '@/utils/calendar';
 import { usePropertiesStore } from '@/stores/properties';
+import { useLanguage } from '@/composables/useLanguage';
 
 interface Props {
   property: Property;
@@ -21,6 +22,7 @@ const emit = defineEmits<{
 }>();
 
 const propertiesStore = usePropertiesStore();
+const { t } = useLanguage();
 const isExpanded = ref(false);
 
 function handleEdit() {
@@ -69,7 +71,7 @@ function formatDate(date: Date | string | null | undefined): string {
     return '-';
   }
   
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(t('locale.dateFormat'), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -126,7 +128,7 @@ function toggleCalendarStatus() {
       </div>
       <div class="flex items-center gap-2">
         <Badge :class="PROPERTY_STATUS_COLORS[property.status]">
-          {{ PROPERTY_STATUS_LABELS[property.status] }}
+          {{ t(`status.${property.status}`) }}
         </Badge>
         <Button
           variant="ghost"
@@ -144,7 +146,7 @@ function toggleCalendarStatus() {
     <div v-if="isExpanded" class="space-y-3 border-t border-border pt-3">
       <!-- Appointment -->
       <div v-if="property.appointmentDate">
-        <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Appointment</h4>
+        <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{{ t('property.appointment') }}</h4>
         <div class="flex items-center justify-between">
           <p class="text-sm text-foreground">{{ formatDate(property.appointmentDate) }}</p>
           <div class="flex gap-1 ml-2">
@@ -152,7 +154,7 @@ function toggleCalendarStatus() {
               variant="outline"
               size="sm"
               @click="() => handleCalendarSchedule()"
-              title="Open Google Calendar"
+              :title="t('property.openGoogleCalendar')"
               class="text-xs px-2 py-1 h-6"
             >
               <CalendarIcon class="h-3 w-3" />
@@ -162,7 +164,7 @@ function toggleCalendarStatus() {
               size="sm"
               @click="() => toggleCalendarStatus()"
               :class="property.isCalendarScheduled ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-900 dark:border-green-700 dark:text-green-100' : ''"
-              :title="property.isCalendarScheduled ? 'Mark as not scheduled' : 'Mark as scheduled'"
+              :title="property.isCalendarScheduled ? t('property.markAsNotScheduled') : t('property.markAsScheduled')"
               class="text-xs px-1 py-1 h-6 w-6"
             >
               {{ property.isCalendarScheduled ? '✓' : '○' }}
@@ -173,7 +175,7 @@ function toggleCalendarStatus() {
 
       <!-- Requirements -->
       <div v-if="property.requirements && property.requirements.length > 0">
-        <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Requirements</h4>
+        <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{{ t('property.requirements') }}</h4>
         <div class="space-y-1">
           <div v-for="(requirement, index) in property.requirements" :key="index" class="text-sm text-foreground">
             • {{ requirement }}
@@ -183,7 +185,7 @@ function toggleCalendarStatus() {
 
       <!-- Comments -->
       <div v-if="property.comments">
-        <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Comments</h4>
+        <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{{ t('property.comments') }}</h4>
         <p class="text-sm text-foreground">{{ property.comments }}</p>
       </div>
 
@@ -197,7 +199,7 @@ function toggleCalendarStatus() {
           class="flex-1 text-xs"
         >
           <GlobeAltIcon class="h-3 w-3 mr-1" />
-          Link
+          {{ t('property.link') }}
         </Button>
         <Button
           v-if="property.location"
@@ -207,7 +209,7 @@ function toggleCalendarStatus() {
           class="flex-1 text-xs"
         >
           <MapPinIcon class="h-3 w-3 mr-1" />
-          Location
+          {{ t('property.location') }}
         </Button>
         <Button
           v-if="property.whatsapp"
@@ -217,7 +219,7 @@ function toggleCalendarStatus() {
           class="flex-1 text-xs"
         >
           <ChatBubbleOvalLeftIcon class="h-3 w-3 mr-1" />
-          WhatsApp
+          {{ t('property.whatsapp') }}
         </Button>
       </div>
 
@@ -230,7 +232,7 @@ function toggleCalendarStatus() {
           class="flex-1 text-xs"
         >
           <PencilIcon class="h-3 w-3 mr-1" />
-          Edit
+          {{ t('common.edit') }}
         </Button>
         <Button
           variant="outline"
@@ -239,7 +241,7 @@ function toggleCalendarStatus() {
           class="flex-1 text-xs"
         >
           <TrashIcon class="h-3 w-3 mr-1" />
-          Delete
+          {{ t('common.delete') }}
         </Button>
       </div>
     </div>

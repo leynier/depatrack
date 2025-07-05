@@ -2,14 +2,17 @@
 import { ref } from 'vue';
 import { useTheme } from '@/composables/useTheme';
 import { useAuthStore } from '@/stores/auth';
+import { useLanguage } from '@/composables/useLanguage';
 import { Button } from '@/components/ui/button';
 import { SunIcon, MoonIcon, ChartBarIcon, UserIcon } from '@heroicons/vue/24/outline';
 import StatsModal from '@/components/StatsModal.vue';
 import AuthDialog from '@/components/AuthDialog.vue';
 import UserProfile from '@/components/UserProfile.vue';
+import LanguageSelector from '@/components/LanguageSelector.vue';
 
 const { theme, toggleTheme } = useTheme();
 const authStore = useAuthStore();
+const { t } = useLanguage();
 const showStatsModal = ref(false);
 const showAuthDialog = ref(false);
 
@@ -18,7 +21,7 @@ const getThemeIcon = () => {
 };
 
 const getThemeTitle = () => {
-  return theme.value === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  return theme.value === 'dark' ? t('theme.light') : t('theme.dark');
 };
 
 const openGitHub = () => {
@@ -39,9 +42,9 @@ const openAuth = () => {
     <div class="max-w-7xl mx-auto px-6 py-4">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-foreground sans-serif">DepaTrack</h1>
+          <h1 class="text-2xl font-bold text-foreground sans-serif">{{ t('app.title') }}</h1>
           <p class="mt-1 text-sm text-muted-foreground leading-relaxed hidden md:block">
-            Lightweight web app to log and track apartment-rental prospects with local-first architecture and offline support.
+            {{ t('app.description') }}
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -49,7 +52,7 @@ const openAuth = () => {
             variant="outline"
             size="icon"
             @click="openStats"
-            title="View Statistics"
+            :title="t('navigation.statistics')"
             class="border-border hover:bg-muted"
           >
             <ChartBarIcon class="h-4 w-4" />
@@ -58,7 +61,7 @@ const openAuth = () => {
             variant="outline"
             size="icon"
             @click="openGitHub"
-            title="View on GitHub"
+            :title="t('navigation.github')"
             class="border-border hover:bg-muted"
           >
             <!-- GitHub Icon -->
@@ -76,6 +79,8 @@ const openAuth = () => {
             <component :is="getThemeIcon()" class="h-4 w-4" />
           </Button>
           
+          <LanguageSelector />
+
           <!-- Auth Section -->
           <UserProfile v-if="authStore.isAuthenticated" />
           <Button
@@ -83,8 +88,8 @@ const openAuth = () => {
             variant="outline"
             size="icon"
             @click="openAuth"
-            title="Sign In"
-            class="border-border hover:bg-muted"
+            :title="t('auth.signIn')"
+            class="bg-foreground text-background hover:bg-foreground/90"
           >
             <UserIcon class="h-4 w-4" />
           </Button>

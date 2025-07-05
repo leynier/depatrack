@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { useLanguage } from '@/composables/useLanguage';
 
 interface Props {
   open: boolean;
@@ -19,6 +20,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const authStore = useAuthStore();
+const { t } = useLanguage();
 
 const mode = ref<'login' | 'register' | 'forgot'>('login');
 const email = ref('');
@@ -36,37 +38,37 @@ const dialogOpen = computed({
 
 const formTitle = computed(() => {
   switch (mode.value) {
-    case 'login': return 'Sign In';
-    case 'register': return 'Sign Up';
-    case 'forgot': return 'Reset Password';
-    default: return 'Sign In';
+    case 'login': return t('auth.signIn');
+    case 'register': return t('auth.signUp');
+    case 'forgot': return t('auth.resetPassword');
+    default: return t('auth.signIn');
   }
 });
 
 const formDescription = computed(() => {
   switch (mode.value) {
-    case 'login': return 'Sign in to sync your properties across devices';
-    case 'register': return 'Create an account to sync your properties across devices';
-    case 'forgot': return 'Enter your email address to receive password reset instructions';
-    default: return 'Sign in to sync your properties across devices';
+    case 'login': return t('auth.signInDescription');
+    case 'register': return t('auth.signUpDescription');
+    case 'forgot': return t('auth.forgotPasswordDescription');
+    default: return t('auth.signInDescription');
   }
 });
 
 const submitText = computed(() => {
   switch (mode.value) {
-    case 'login': return 'Sign In';
-    case 'register': return 'Sign Up';
-    case 'forgot': return 'Send Reset Email';
-    default: return 'Sign In';
+    case 'login': return t('auth.signIn');
+    case 'register': return t('auth.signUp');
+    case 'forgot': return t('auth.sendResetEmail');
+    default: return t('auth.signIn');
   }
 });
 
 const switchText = computed(() => {
   switch (mode.value) {
-    case 'login': return "Don't have an account? Sign up";
-    case 'register': return "Already have an account? Sign in";
-    case 'forgot': return "Back to sign in";
-    default: return "Don't have an account? Sign up";
+    case 'login': return t('auth.dontHaveAccount');
+    case 'register': return t('auth.alreadyHaveAccount');
+    case 'forgot': return t('auth.backToSignIn');
+    default: return t('auth.dontHaveAccount');
   }
 });
 
@@ -189,22 +191,22 @@ function handleOpenChange(open: boolean) {
         <!-- Email verification success message -->
         <div v-if="showVerificationMessage && mode === 'login'" class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
           <div class="text-sm text-green-600 dark:text-green-400">
-            <strong>Registration successful!</strong><br>
-            We've sent a verification email to your address. Please check your inbox and click the verification link, then sign in below.
+            <strong>{{ t('auth.registrationSuccessTitle') }}</strong><br>
+            {{ t('auth.registrationSuccessMessage') }}
           </div>
         </div>
 
         <!-- Success message for password reset -->
         <div v-if="resetEmailSent && mode === 'forgot'" class="text-center space-y-4">
           <div class="text-green-600 dark:text-green-400 text-sm">
-            Password reset email sent! Check your inbox for instructions.
+            {{ t('auth.passwordResetEmailSent') }}
           </div>
           <Button
             variant="outline"
             @click="switchMode"
             class="w-full"
           >
-            Back to Sign In
+            {{ t('auth.backToSignIn') }}
           </Button>
         </div>
 
@@ -230,7 +232,7 @@ function handleOpenChange(open: boolean) {
                 d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h240z"
               />
             </svg>
-            {{ isGoogleSignIn ? 'Please wait...' : (mode === 'register' ? 'Sign up with Google' : 'Continue with Google') }}
+            {{ isGoogleSignIn ? t('common.pleaseWait') : (mode === 'register' ? t('auth.signUpWithGoogle') : t('auth.continueWithGoogle')) }}
           </Button>
 
           <div class="relative">
@@ -238,7 +240,7 @@ function handleOpenChange(open: boolean) {
               <span class="w-full border-t border-border" />
             </div>
             <div class="relative flex justify-center text-xs uppercase">
-              <span class="bg-background px-2 text-muted-foreground">Or continue with email</span>
+              <span class="bg-background px-2 text-muted-foreground">{{ t('auth.orContinueWithEmail') }}</span>
             </div>
           </div>
         </div>
@@ -246,12 +248,12 @@ function handleOpenChange(open: boolean) {
         <!-- Form -->
         <form v-if="!resetEmailSent" @submit.prevent="handleSubmit" class="space-y-4">
           <div class="space-y-2">
-            <Label for="email">Email</Label>
+            <Label for="email">{{ t('auth.email') }}</Label>
             <Input
               id="email"
               v-model="email"
               type="email"
-              placeholder="Enter your email"
+              :placeholder="t('auth.enterYourEmail')"
               required
               :disabled="isSubmitting"
             />
@@ -259,7 +261,7 @@ function handleOpenChange(open: boolean) {
 
           <div v-if="mode !== 'forgot'" class="space-y-2">
             <div class="flex items-center justify-between">
-              <Label for="password">Password</Label>
+              <Label for="password">{{ t('auth.password') }}</Label>
               <Button
                 v-if="mode === 'login'"
                 variant="ghost"
@@ -268,26 +270,26 @@ function handleOpenChange(open: boolean) {
                 type="button"
                 :disabled="isSubmitting"
               >
-                Forgot password?
+                {{ t('auth.forgotPassword') }}
               </Button>
             </div>
             <Input
               id="password"
               v-model="password"
               type="password"
-              placeholder="Enter your password"
+              :placeholder="t('auth.enterYourPassword')"
               required
               :disabled="isSubmitting"
             />
           </div>
 
           <div v-if="mode === 'register'" class="space-y-2">
-            <Label for="confirmPassword">Confirm Password</Label>
+            <Label for="confirmPassword">{{ t('auth.confirmPassword') }}</Label>
             <Input
               id="confirmPassword"
               v-model="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              :placeholder="t('auth.confirmYourPassword')"
               required
               :disabled="isSubmitting"
             />
@@ -302,7 +304,7 @@ function handleOpenChange(open: boolean) {
             class="w-full"
             :disabled="!isFormValid || isSubmitting || isGoogleSignIn"
           >
-            {{ isSubmitting ? 'Please wait...' : submitText }}
+            {{ isSubmitting ? t('common.pleaseWait') : submitText }}
           </Button>
         </form>
 

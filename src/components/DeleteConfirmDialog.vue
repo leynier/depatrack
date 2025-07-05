@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { type Property } from '@/types/property';
+import { useLanguage } from '@/composables/useLanguage';
 
 interface Props {
   open?: boolean;
@@ -19,6 +20,8 @@ const emit = defineEmits<{
   'update:open': [value: boolean];
 }>();
 
+const { t } = useLanguage();
+
 function handleClose() {
   emit('update:open', false);
   emit('close');
@@ -33,9 +36,9 @@ function handleConfirm() {
   <Dialog :open="open" @update:open="handleClose">
     <DialogContent class="sm:max-w-md max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
       <DialogHeader>
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle>{{ t('delete.title') }}</DialogTitle>
         <DialogDescription>
-          Are you sure you want to delete this property? This action cannot be undone.
+          {{ t('delete.message') }}
         </DialogDescription>
       </DialogHeader>
 
@@ -46,14 +49,14 @@ function handleConfirm() {
           @click="handleClose"
           class="border-border hover:bg-muted"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </Button>
         <Button 
           type="button" 
           @click="handleConfirm"
           class="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
         >
-          Delete
+          {{ t('delete.confirm') }}
         </Button>
       </DialogFooter>
     </DialogContent>

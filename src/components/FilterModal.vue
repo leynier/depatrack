@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useLanguage } from '@/composables/useLanguage';
 
 interface Props {
   open?: boolean;
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 }>();
 
 const propertiesStore = usePropertiesStore();
+const { t } = useLanguage();
 
 const minPrice = ref<number | null>(null);
 const maxPrice = ref<number | null>(null);
@@ -43,9 +45,9 @@ const maxPriceInput = computed({
 });
 
 const statusOptions = computed(() => {
-  return Object.entries(PROPERTY_STATUS_LABELS).map(([key, label]) => ({
+  return Object.keys(PROPERTY_STATUS_LABELS).map((key) => ({
     value: key as PropertyStatus,
-    label
+    label: t(`status.${key}`)
   }));
 });
 
@@ -100,43 +102,43 @@ function isStatusSelected(status: PropertyStatus) {
   <Dialog :open="open" @update:open="handleClose">
     <DialogContent class="sm:max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
       <DialogHeader>
-        <DialogTitle>Configure Filters</DialogTitle>
+        <DialogTitle>{{ t('filters.title') }}</DialogTitle>
         <DialogDescription>
-          Set up filters to narrow down your property search
+          {{ t('filters.description') }}
         </DialogDescription>
       </DialogHeader>
 
       <div class="space-y-6">
         <div>
-          <h4 class="text-sm font-medium mb-3">Price Range</h4>
+          <h4 class="text-sm font-medium mb-3">{{ t('filters.priceRange') }}</h4>
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
-              <Label for="minPrice">Min Price</Label>
+              <Label for="minPrice">{{ t('filters.minPrice') }}</Label>
               <Input
                 id="minPrice"
                 v-model="minPriceInput"
                 type="number"
                 min="0"
                 step="1000"
-                placeholder="0"
+                :placeholder="t('filters.minPrice')"
               />
             </div>
             <div class="space-y-2">
-              <Label for="maxPrice">Max Price</Label>
+              <Label for="maxPrice">{{ t('filters.maxPrice') }}</Label>
               <Input
                 id="maxPrice"
                 v-model="maxPriceInput"
                 type="number"
                 min="0"
                 step="1000"
-                placeholder="No limit"
+                :placeholder="t('filters.noLimit')"
               />
             </div>
           </div>
         </div>
 
         <div>
-          <h4 class="text-sm font-medium mb-3">Status</h4>
+          <h4 class="text-sm font-medium mb-3">{{ t('property.status') }}</h4>
           <div class="grid grid-cols-2 gap-2">
             <Badge
               v-for="status in statusOptions"
@@ -153,10 +155,10 @@ function isStatusSelected(status: PropertyStatus) {
 
       <DialogFooter>
         <Button type="button" variant="outline" @click="handleClose">
-          Cancel
+          {{ t('common.cancel') }}
         </Button>
         <Button type="button" @click="handleApply">
-          Apply Filters
+          {{ t('filters.applyFilters') }}
         </Button>
       </DialogFooter>
     </DialogContent>

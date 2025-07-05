@@ -13,8 +13,10 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowDownTrayIcon, ArrowUpTrayIcon, FunnelIcon, PlusIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { FunnelIcon as FunnelSolidIcon } from '@heroicons/vue/24/solid';
 import { exportToCSV, downloadCSV, parseCSV, generateCSVFilename } from '@/utils/csv';
+import { useLanguage } from '@/composables/useLanguage';
 
 const propertiesStore = usePropertiesStore();
+const { t } = useLanguage();
 
 const showForm = ref(false);
 const showFilters = ref(false);
@@ -41,9 +43,9 @@ const hasActiveFilters = computed(() => propertiesStore.hasActiveFilters);
 
 const emptyStateMessage = computed(() => {
   if (hasActiveFilters.value) {
-    return 'No properties match the applied filters. Try adjusting your search criteria.';
+    return t('app.noPropertiesWithFilters');
   }
-  return 'No properties registered. Add the first one!';
+  return t('app.noProperties');
 });
 
 // Update search on input change
@@ -84,10 +86,10 @@ function handleExport() {
     const csvContent = exportToCSV(properties);
     const filename = generateCSVFilename();
     downloadCSV(csvContent, filename);
-    showNotificationDialog('Export Successful', `Successfully exported ${properties.length} properties!`, 'success');
+    showNotificationDialog(t('export.title'), t('export.exportSuccess', { count: properties.length }), 'success');
   } catch (error) {
     console.error('Export failed:', error);
-    showNotificationDialog('Export Failed', 'Failed to export properties. Please try again.', 'error');
+    showNotificationDialog(t('export.title'), t('export.exportError'), 'error');
   }
 }
 
@@ -102,7 +104,7 @@ async function handleFileSelect(event: Event) {
   if (!file) return;
   
   if (!file.name.toLowerCase().endsWith('.csv')) {
-    showNotificationDialog('Invalid File', 'Please select a CSV file', 'warning');
+    showNotificationDialog(t('import.invalidFileTitle'), t('import.invalidFileMessage'), 'warning');
     return;
   }
   
@@ -113,30 +115,30 @@ async function handleFileSelect(event: Event) {
     const properties = parseCSV(text);
     
     if (properties.length === 0) {
-      showNotificationDialog('No Properties Found', 'No valid properties found in the CSV file', 'warning');
+      showNotificationDialog(t('import.noPropertiesFoundTitle'), t('import.noPropertiesFoundMessage'), 'warning');
       return;
     }
     
-    const confirmMessage = `This will add ${properties.length} new properties to your existing data. Are you sure you want to continue?`;
+    const confirmMessage = t('import.confirmMessage', { count: properties.length });
     
     showNotificationDialog(
-      'Confirm Import',
+      t('import.title'),
       confirmMessage,
       'info',
       true,
       () => {
         try {
           propertiesStore.addProperties(properties);
-          showNotificationDialog('Import Successful', `Successfully imported ${properties.length} properties!`, 'success');
+          showNotificationDialog(t('import.title'), t('import.importSuccess', { count: properties.length }), 'success');
         } catch (error) {
           console.error('Import failed:', error);
-          showNotificationDialog('Import Failed', 'Failed to import properties', 'error');
+          showNotificationDialog(t('import.title'), t('import.importError'), 'error');
         }
       }
     );
   } catch (error) {
     console.error('Import failed:', error);
-    showNotificationDialog('Import Failed', 'Failed to import CSV file', 'error');
+    showNotificationDialog(t('import.title'), t('import.importError'), 'error');
   } finally {
     isImporting.value = false;
     if (target) {
@@ -227,7 +229,7 @@ defineExpose({
         <Input
           v-model="searchInput"
           type="text"
-          placeholder="Search properties ..."
+          :placeholder="t('filters.searchPlaceholder')"
           class="pl-10 border-border"
         />
       </div>
@@ -241,7 +243,7 @@ defineExpose({
           'border-border hover:bg-muted',
           hasActiveFilters ? 'bg-primary/10 border-primary/20' : ''
         ]"
-        title="Configure Filters"
+        :title="t('filters.title')"
       >
         <FunnelSolidIcon v-if="hasActiveFilters" class="h-4 w-4 text-primary" />
         <FunnelIcon v-else class="h-4 w-4" />
@@ -255,7 +257,7 @@ defineExpose({
           size="icon" 
           @click="handleExport"
           class="border-border hover:bg-muted"
-          title="Export to CSV"
+          :title="t('export.title')"
         >
           <ArrowDownTrayIcon class="h-4 w-4" />
         </Button>
@@ -267,7 +269,7 @@ defineExpose({
           @click="handleImportClick"
           :disabled="isImporting"
           class="border-border hover:bg-muted"
-          title="Import from CSV"
+          :title="t('import.title')"
         >
           <ArrowUpTrayIcon class="h-4 w-4" />
         </Button>
@@ -276,7 +278,7 @@ defineExpose({
         <Button 
           @click="handleAddProperty"
           class="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg rounded-md"
-          title="Add New Property"
+          :title="t('property.addProperty')"
         >
           <PlusIcon class="h-4 w-4" />
         </Button>
@@ -291,7 +293,7 @@ defineExpose({
         variant="secondary"
         class="gap-1 px-2 py-1"
       >
-        Search: "{{ propertiesStore.filters.search }}"
+        {{ t('common.search') }}: "{{ propertiesStore.filters.search }}"
         <button @click="removeFilter('search')" class="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5">
           <XMarkIcon class="h-3 w-3" />
         </button>
@@ -303,7 +305,7 @@ defineExpose({
         variant="secondary"
         class="gap-1 px-2 py-1"
       >
-        Min Price: {{ propertiesStore.filters.minPrice }}
+        {{ t('filters.minPrice') }}: {{ propertiesStore.filters.minPrice }}
         <button @click="removeFilter('minPrice')" class="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5">
           <XMarkIcon class="h-3 w-3" />
         </button>
@@ -315,7 +317,7 @@ defineExpose({
         variant="secondary"
         class="gap-1 px-2 py-1"
       >
-        Max Price: {{ propertiesStore.filters.maxPrice }}
+        {{ t('filters.maxPrice') }}: {{ propertiesStore.filters.maxPrice }}
         <button @click="removeFilter('maxPrice')" class="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5">
           <XMarkIcon class="h-3 w-3" />
         </button>
@@ -328,7 +330,7 @@ defineExpose({
         variant="secondary"
         class="gap-1 px-2 py-1"
       >
-        {{ PROPERTY_STATUS_LABELS[status] }}
+        {{ t(`status.${status}`) }}
         <button @click="removeFilter('status', status)" class="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5">
           <XMarkIcon class="h-3 w-3" />
         </button>
@@ -412,7 +414,7 @@ defineExpose({
         @click="handleImportClick"
         :disabled="isImporting"
         class="h-14 w-14 rounded-full shadow-lg bg-card border-border hover:bg-muted"
-        title="Import from CSV"
+        :title="t('import.title')"
       >
         <ArrowUpTrayIcon class="h-5 w-5" />
       </Button>
@@ -423,7 +425,7 @@ defineExpose({
         size="icon" 
         @click="handleExport"
         class="h-14 w-14 rounded-full shadow-lg bg-card border-border hover:bg-muted"
-        title="Export to CSV"
+        :title="t('export.title')"
       >
         <ArrowDownTrayIcon class="h-5 w-5" />
       </Button>
@@ -432,7 +434,7 @@ defineExpose({
       <Button 
         @click="handleAddProperty"
         class="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
-        title="Add New Property"
+        :title="t('property.addProperty')"
       >
         <PlusIcon class="h-6 w-6" />
       </Button>

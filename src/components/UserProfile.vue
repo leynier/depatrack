@@ -6,10 +6,12 @@ import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserIcon, ArrowRightOnRectangleIcon, CloudIcon, CloudArrowUpIcon, WifiIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
+import { useLanguage } from '@/composables/useLanguage';
 
 const authStore = useAuthStore();
 const propertiesStore = usePropertiesStore();
 const { isOnline } = useNetworkStatus();
+const { t } = useLanguage();
 
 const isLoggingOut = ref(false);
 
@@ -25,9 +27,9 @@ const statusIcon = computed(() => {
 });
 
 const statusText = computed(() => {
-  if (!isOnline.value) return 'Offline';
-  if (propertiesStore.isSyncing) return 'Syncing...';
-  return 'Online';
+  if (!isOnline.value) return t('auth.offline');
+  if (propertiesStore.isSyncing) return t('auth.syncing');
+  return t('auth.online');
 });
 
 const statusColor = computed(() => {
@@ -37,19 +39,19 @@ const statusColor = computed(() => {
 });
 
 const lastSyncText = computed(() => {
-  if (!propertiesStore.lastSyncTime) return 'Never synced';
+  if (!propertiesStore.lastSyncTime) return t('auth.neverSynced');
   const now = new Date();
   const diff = now.getTime() - propertiesStore.lastSyncTime.getTime();
   const minutes = Math.floor(diff / 60000);
   
-  if (minutes < 1) return 'Just synced';
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1) return t('auth.justSynced');
+  if (minutes < 60) return t('auth.minutesAgo', { minutes });
   
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hr ago`;
+  if (hours < 24) return t('auth.hoursAgo', { hours });
   
   const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
+  return t('auth.daysAgo', { days });
 });
 
 async function handleLogout() {
@@ -108,14 +110,14 @@ async function handleSync() {
       
       <DropdownMenuItem @click="handleSync" :disabled="!isOnline || propertiesStore.isSyncing">
         <CloudArrowUpIcon class="h-4 w-4 mr-2" />
-        Sync Now
+        {{ t('auth.syncNow') }}
       </DropdownMenuItem>
       
       <DropdownMenuSeparator />
       
       <DropdownMenuItem @click="handleLogout" :disabled="isLoggingOut">
         <ArrowRightOnRectangleIcon class="h-4 w-4 mr-2" />
-        {{ isLoggingOut ? 'Signing out...' : 'Sign Out' }}
+        {{ isLoggingOut ? t('auth.signingOut') : t('auth.signOut') }}
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>

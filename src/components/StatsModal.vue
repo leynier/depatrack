@@ -5,6 +5,7 @@ import { formatCurrency } from '@/utils/currency';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { InformationCircleIcon } from '@heroicons/vue/24/outline';
+import { useLanguage } from '@/composables/useLanguage';
 
 interface Props {
   open?: boolean;
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 }>();
 
 const propertiesStore = usePropertiesStore();
+const { t } = useLanguage();
 const activeTooltip = ref<string | null>(null);
 let tooltipTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -81,9 +83,9 @@ function toggleTooltip(tooltipId: string) {
   <Dialog :open="open" @update:open="handleClose">
     <DialogContent class="sm:max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
       <DialogHeader>
-        <DialogTitle>Property Statistics</DialogTitle>
+        <DialogTitle>{{ t('stats.title') }}</DialogTitle>
         <DialogDescription>
-          Overview of your property tracking progress
+          {{ t('stats.description') }}
         </DialogDescription>
       </DialogHeader>
 
@@ -93,7 +95,7 @@ function toggleTooltip(tooltipId: string) {
           <div class="bg-muted/50 rounded-lg p-4 text-center relative">
             <div class="text-2xl font-bold text-foreground">{{ stats.total || 0 }}</div>
             <div class="flex items-center justify-center gap-1">
-              <span class="text-sm text-muted-foreground">Total Properties</span>
+              <span class="text-sm text-muted-foreground">{{ t('stats.totalProperties') }}</span>
               <button 
                 @click="toggleTooltip('total')"
                 class="text-muted-foreground hover:text-foreground transition-colors"
@@ -104,13 +106,13 @@ function toggleTooltip(tooltipId: string) {
             <!-- Tooltip -->
             <div v-if="activeTooltip === 'total'" 
                  class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-popover border border-border rounded-md p-2 text-xs text-popover-foreground shadow-md z-10 w-48">
-              Total number of properties you're tracking
+              {{ t('stats.totalTooltip') }}
             </div>
           </div>
           <div class="bg-muted/50 rounded-lg p-4 text-center relative">
             <div class="text-2xl font-bold text-foreground">{{ formatCurrency(stats.averagePrice || 0) }}</div>
             <div class="flex items-center justify-center gap-1">
-              <span class="text-sm text-muted-foreground">Average Price</span>
+              <span class="text-sm text-muted-foreground">{{ t('stats.averagePrice') }}</span>
               <button 
                 @click="toggleTooltip('price')"
                 class="text-muted-foreground hover:text-foreground transition-colors"
@@ -121,21 +123,21 @@ function toggleTooltip(tooltipId: string) {
             <!-- Tooltip -->
             <div v-if="activeTooltip === 'price'" 
                  class="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-popover border border-border rounded-md p-2 text-xs text-popover-foreground shadow-md z-10 w-48">
-              Average rental price across all properties
+              {{ t('stats.priceTooltip') }}
             </div>
           </div>
         </div>
 
         <!-- Status Breakdown -->
         <div class="space-y-4">
-          <h3 class="text-sm font-medium text-foreground">Status Breakdown</h3>
+          <h3 class="text-sm font-medium text-foreground">{{ t('stats.statusBreakdown') }}</h3>
           
           <div class="space-y-3">
             <!-- Available -->
             <div class="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg relative">
               <div class="flex items-center gap-3">
                 <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span class="text-sm font-medium text-foreground">Available</span>
+                <span class="text-sm font-medium text-foreground">{{ t('stats.available') }}</span>
                 <button 
                   @click="toggleTooltip('available')"
                   class="text-muted-foreground hover:text-foreground transition-colors"
@@ -147,7 +149,7 @@ function toggleTooltip(tooltipId: string) {
               <!-- Tooltip -->
               <div v-if="activeTooltip === 'available'" 
                    class="absolute top-full left-0 mt-2 bg-popover border border-border rounded-md p-2 text-xs text-popover-foreground shadow-md z-10 w-60">
-                Properties you haven't contacted yet - ready to reach out
+                {{ t('stats.availableTooltip') }}
               </div>
             </div>
 
@@ -155,7 +157,7 @@ function toggleTooltip(tooltipId: string) {
             <div class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg relative">
               <div class="flex items-center gap-3">
                 <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span class="text-sm font-medium text-foreground">Active</span>
+                <span class="text-sm font-medium text-foreground">{{ t('stats.active') }}</span>
                 <button 
                   @click="toggleTooltip('active')"
                   class="text-muted-foreground hover:text-foreground transition-colors"
@@ -167,7 +169,7 @@ function toggleTooltip(tooltipId: string) {
               <!-- Tooltip -->
               <div v-if="activeTooltip === 'active'" 
                    class="absolute top-full left-0 mt-2 bg-popover border border-border rounded-md p-2 text-xs text-popover-foreground shadow-md z-10 w-64">
-                Properties you're actively working on - contacted, visiting, negotiating, or applying
+                {{ t('stats.activeTooltip') }}
               </div>
             </div>
 
@@ -175,7 +177,7 @@ function toggleTooltip(tooltipId: string) {
             <div class="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg relative">
               <div class="flex items-center gap-3">
                 <div class="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                <span class="text-sm font-medium text-foreground">Completed</span>
+                <span class="text-sm font-medium text-foreground">{{ t('stats.completed') }}</span>
                 <button 
                   @click="toggleTooltip('completed')"
                   class="text-muted-foreground hover:text-foreground transition-colors"
@@ -187,7 +189,7 @@ function toggleTooltip(tooltipId: string) {
               <!-- Tooltip -->
               <div v-if="activeTooltip === 'completed'" 
                    class="absolute top-full left-0 mt-2 bg-popover border border-border rounded-md p-2 text-xs text-popover-foreground shadow-md z-10 w-60">
-                Properties where you succeeded - approved applications or places you rented
+                {{ t('stats.completedTooltip') }}
               </div>
             </div>
 
@@ -195,7 +197,7 @@ function toggleTooltip(tooltipId: string) {
             <div class="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/20 rounded-lg relative">
               <div class="flex items-center gap-3">
                 <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span class="text-sm font-medium text-foreground">Rejected</span>
+                <span class="text-sm font-medium text-foreground">{{ t('stats.rejected') }}</span>
                 <button 
                   @click="toggleTooltip('rejected')"
                   class="text-muted-foreground hover:text-foreground transition-colors"
@@ -207,7 +209,7 @@ function toggleTooltip(tooltipId: string) {
               <!-- Tooltip -->
               <div v-if="activeTooltip === 'rejected'" 
                    class="absolute top-full left-0 mt-2 bg-popover border border-border rounded-md p-2 text-xs text-popover-foreground shadow-md z-10 w-64">
-                Properties that didn't work out - rejected, over budget, or no longer interested
+                {{ t('stats.rejectedTooltip') }}
               </div>
             </div>
           </div>
@@ -217,7 +219,7 @@ function toggleTooltip(tooltipId: string) {
         <div class="space-y-2 relative">
           <div class="flex justify-between items-center text-xs text-muted-foreground">
             <div class="flex items-center gap-1">
-              <span>Progress</span>
+              <span>{{ t('stats.progress') }}</span>
               <button 
                 @click="toggleTooltip('progress')"
                 class="text-muted-foreground hover:text-foreground transition-colors"
@@ -225,12 +227,12 @@ function toggleTooltip(tooltipId: string) {
                 <InformationCircleIcon class="h-3 w-3" />
               </button>
             </div>
-            <span>{{ processedRate }}% processed</span>
+            <span>{{ processedRate }}% {{ t('stats.processed') }}</span>
           </div>
           <!-- Tooltip -->
           <div v-if="activeTooltip === 'progress'" 
                class="absolute top-full left-0 mt-2 bg-popover border border-border rounded-md p-2 text-xs text-popover-foreground shadow-md z-10 w-64">
-            Shows how many properties have reached a final outcome (completed or rejected) vs still in progress
+            {{ t('stats.progressTooltip') }}
           </div>
           <div class="w-full bg-muted rounded-full h-2">
             <div class="flex h-2 rounded-full overflow-hidden">
@@ -245,15 +247,15 @@ function toggleTooltip(tooltipId: string) {
             </div>
           </div>
           <div class="flex justify-between text-xs">
-            <span class="text-emerald-600">Completed</span>
-            <span class="text-red-600">Rejected</span>
+            <span class="text-emerald-600">{{ t('stats.completed') }}</span>
+            <span class="text-red-600">{{ t('stats.rejected') }}</span>
           </div>
         </div>
       </div>
 
       <DialogFooter>
         <Button type="button" @click="handleClose">
-          Close
+          {{ t('common.close') }}
         </Button>
       </DialogFooter>
     </DialogContent>

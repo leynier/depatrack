@@ -29,6 +29,8 @@ coverage
 
 *.tsbuildinfo
 
+*.bak
+
 # AI Tools Configuration Files
 .gemini/
 .mcp.json
@@ -49,5 +51,4 @@ AGENTS.md
 CLAUDE.md
 GEMINI.md
 ruler_aider_instructions.md
-*.bak
 # END Ruler Generated Files

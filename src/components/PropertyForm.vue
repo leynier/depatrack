@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { usePropertiesStore } from '@/stores/properties';
+import { useLanguage } from '@/composables/useLanguage';
 import { PROPERTY_STATUS_LABELS, type PropertyFormData, type PropertyStatus } from '@/types/property';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,7 @@ const emit = defineEmits<{
 }>();
 
 const propertiesStore = usePropertiesStore();
+const { t } = useLanguage();
 
 const formData = ref<PropertyFormData>({
   zone: '',
@@ -72,12 +74,12 @@ const errors = ref<Partial<Record<keyof PropertyFormData, string>>>({});
 const isSubmitting = ref(false);
 
 const isEditing = computed(() => !!props.propertyId);
-const modalTitle = computed(() => isEditing.value ? 'Edit Property' : 'Add Property');
+const modalTitle = computed(() => isEditing.value ? t('property.editProperty') : t('property.addProperty'));
 
 const statusOptions = computed(() => {
-  return Object.entries(PROPERTY_STATUS_LABELS).map(([key, label]) => ({
+  return Object.entries(PROPERTY_STATUS_LABELS).map(([key]) => ({
     value: key as PropertyStatus,
-    label
+    label: t(`status.${key}`)
   }));
 });
 
@@ -134,19 +136,19 @@ function validateForm(): boolean {
   errors.value = {};
   
   if (formData.value.price !== null && formData.value.price < 0) {
-    errors.value.price = 'Price must be greater than or equal to 0';
+    errors.value.price = t('validation.pricePositive');
   }
   
   if (formData.value.link && !isValidUrl(formData.value.link)) {
-    errors.value.link = 'Please enter a valid URL';
+    errors.value.link = t('validation.validUrl');
   }
   
   if (formData.value.location && !isValidUrl(formData.value.location)) {
-    errors.value.location = 'Please enter a valid URL';
+    errors.value.location = t('validation.validUrl');
   }
   
   if (formData.value.whatsapp && !isValidPhoneNumber(formData.value.whatsapp)) {
-    errors.value.whatsapp = 'Please enter a valid phone number';
+    errors.value.whatsapp = t('validation.validPhone');
   }
   
   return Object.keys(errors.value).length === 0;
@@ -234,7 +236,7 @@ function handleClose() {
       <DialogHeader>
         <DialogTitle>{{ modalTitle }}</DialogTitle>
         <DialogDescription>
-          Fill in the property information
+          {{ t('property.fillPropertyInfo') }}
         </DialogDescription>
       </DialogHeader>
 
@@ -242,13 +244,13 @@ function handleClose() {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-2">
             <Label for="zone">
-              Zone
+              {{ t('property.zone') }}
             </Label>
             <Input
               id="zone"
               v-model="formData.zone"
               type="text"
-              placeholder="Enter zone or location"
+              :placeholder="t('property.placeholder.zone')"
               :class="{ 'border-destructive': errors.zone }"
             />
             <p v-if="errors.zone" class="text-sm text-destructive">{{ errors.zone }}</p>
@@ -256,7 +258,7 @@ function handleClose() {
 
           <div class="space-y-2">
             <Label for="price">
-              Price
+              {{ t('property.price') }}
             </Label>
             <Input
               id="price"
@@ -264,7 +266,7 @@ function handleClose() {
               type="number"
               min="0"
               step="1"
-              placeholder="Enter price"
+              :placeholder="t('property.placeholder.price')"
               :class="{ 'border-destructive': errors.price }"
             />
             <p v-if="errors.price" class="text-sm text-destructive">{{ errors.price }}</p>
@@ -273,10 +275,10 @@ function handleClose() {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-2">
-            <Label for="status">Status</Label>
+            <Label for="status">{{ t('property.status') }}</Label>
             <Select v-model="formData.status">
               <SelectTrigger>
-                <SelectValue placeholder="Select status" />
+                <SelectValue :placeholder="t('property.placeholder.status')" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem v-for="status in statusOptions" :key="status.value" :value="status.value">
@@ -287,7 +289,7 @@ function handleClose() {
           </div>
 
           <div class="space-y-2">
-            <Label for="appointmentDate">Appointment</Label>
+            <Label for="appointmentDate">{{ t('property.appointment') }}</Label>
             <Input
               id="appointmentDate"
               v-model="appointmentDateInput"
@@ -299,13 +301,13 @@ function handleClose() {
         </div>
 
         <div class="space-y-2">
-          <Label>Requirements</Label>
+          <Label>{{ t('property.requirements') }}</Label>
           <div class="space-y-2">
             <!-- Existing requirements -->
             <div v-for="(requirement, index) in formData.requirements || []" :key="index" class="flex gap-2">
               <Input
                 v-model="formData.requirements![index]"
-                placeholder="Enter requirement"
+                :placeholder="t('property.placeholder.requirement')"
                 class="flex-1"
                 @input="updateRequirement(index, ($event.target as HTMLInputElement).value)"
               />
@@ -328,41 +330,41 @@ function handleClose() {
               class="w-full h-10 border-dashed"
             >
               <PlusIcon class="h-4 w-4 mr-2" />
-              Add requirement
+              {{ t('property.addRequirement') }}
             </Button>
           </div>
         </div>
 
         <div class="space-y-2">
-          <Label for="comments">Comments</Label>
+          <Label for="comments">{{ t('property.comments') }}</Label>
           <Textarea
             id="comments"
             v-model="formData.comments"
-            placeholder="Enter additional comments or observations"
+            :placeholder="t('property.placeholder.comments')"
             class="min-h-[80px]"
           />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-2">
-            <Label for="link">Link</Label>
+            <Label for="link">{{ t('property.link') }}</Label>
             <Input
               id="link"
               v-model="formData.link"
               type="url"
-              placeholder="https://example.com/property"
+              :placeholder="t('property.placeholder.link')"
               :class="{ 'border-destructive': errors.link }"
             />
             <p v-if="errors.link" class="text-sm text-destructive">{{ errors.link }}</p>
           </div>
 
           <div class="space-y-2">
-            <Label for="whatsapp">WhatsApp</Label>
+            <Label for="whatsapp">{{ t('property.whatsapp') }}</Label>
             <Input
               id="whatsapp"
               v-model="formData.whatsapp"
               type="tel"
-              placeholder="+12345678901"
+              :placeholder="t('property.placeholder.whatsapp')"
               :class="{ 'border-destructive': errors.whatsapp }"
             />
             <p v-if="errors.whatsapp" class="text-sm text-destructive">{{ errors.whatsapp }}</p>
@@ -370,12 +372,12 @@ function handleClose() {
         </div>
 
         <div class="space-y-2">
-          <Label for="location">Location</Label>
+          <Label for="location">{{ t('property.location') }}</Label>
           <Input
             id="location"
             v-model="formData.location"
             type="url"
-            placeholder="https://maps.google.com/..."
+            :placeholder="t('property.placeholder.location')"
             :class="{ 'border-destructive': errors.location }"
           />
           <p v-if="errors.location" class="text-sm text-destructive">{{ errors.location }}</p>
@@ -383,10 +385,10 @@ function handleClose() {
 
         <DialogFooter>
           <Button type="button" variant="outline" @click="handleClose">
-            Cancel
+            {{ t('common.cancel') }}
           </Button>
           <Button type="submit" :disabled="isSubmitting">
-            {{ isSubmitting ? 'Saving...' : (isEditing ? 'Update Property' : 'Save Property') }}
+            {{ isSubmitting ? t('common.saving') : (isEditing ? t('property.updateProperty') : t('property.saveProperty')) }}
           </Button>
         </DialogFooter>
       </form>

@@ -8,8 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { useLanguage } from '@/composables/useLanguage';
 
 const propertiesStore = usePropertiesStore();
+const { t } = useLanguage();
 
 const search = ref('');
 const minPrice = ref<number | null>(null);
@@ -35,9 +37,9 @@ const filters = computed(() => propertiesStore.filters);
 const hasActiveFilters = computed(() => propertiesStore.hasActiveFilters);
 
 const statusOptions = computed(() => {
-  return Object.entries(PROPERTY_STATUS_LABELS).map(([key, label]) => ({
+  return Object.keys(PROPERTY_STATUS_LABELS).map((key) => ({
     value: key as PropertyStatus,
-    label
+    label: t(`status.${key}`)
   }));
 });
 
@@ -104,7 +106,7 @@ function toggleAdvancedFilters() {
               <Input
                 v-model="search"
                 type="text"
-                placeholder="Search properties... (separate terms)"
+                :placeholder="t('filters.searchPlaceholder')"
                 class="pl-10 pr-10"
               />
               <Button
@@ -127,8 +129,8 @@ function toggleAdvancedFilters() {
             >
               <FunnelIcon v-if="!showAdvancedFilters && activeFilterCount === 0" class="h-4 w-4 mr-1" />
               <XMarkIcon v-else class="h-4 w-4 mr-1" />
-              <span class="hidden sm:inline">{{ showAdvancedFilters ? 'Hide Filters' : 'Filter' }}</span>
-              <span class="sm:hidden">Filter</span>
+              <span class="hidden sm:inline">{{ showAdvancedFilters ? t('filters.hideFilters') : t('common.filter') }}</span>
+              <span class="sm:hidden">{{ t('common.filter') }}</span>
               <Badge v-if="activeFilterCount > 0" variant="secondary" class="ml-1">
                 {{ activeFilterCount }}
               </Badge>
@@ -140,7 +142,7 @@ function toggleAdvancedFilters() {
               size="sm"
               @click="clearAllFilters"
             >
-              Clear All
+              {{ t('filters.clearAll') }}
             </Button>
           </div>
         </div>
@@ -149,25 +151,25 @@ function toggleAdvancedFilters() {
           <Separator class="mb-4" />
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label class="block text-sm font-medium text-foreground mb-2">Min Price</label>
+              <label class="block text-sm font-medium text-foreground mb-2">{{ t('filters.minPrice') }}</label>
               <Input
                 v-model="minPriceInput"
                 type="number"
-                placeholder="0"
+                :placeholder="t('filters.minPrice')"
               />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-foreground mb-2">Max Price</label>
+              <label class="block text-sm font-medium text-foreground mb-2">{{ t('filters.maxPrice') }}</label>
               <Input
                 v-model="maxPriceInput"
                 type="number"
-                placeholder="No limit"
+                :placeholder="t('filters.noLimit')"
               />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-foreground mb-2">Status</label>
+              <label class="block text-sm font-medium text-foreground mb-2">{{ t('property.status') }}</label>
               <select
                 v-model="selectedStatuses"
                 multiple
@@ -222,7 +224,7 @@ function toggleAdvancedFilters() {
               variant="secondary"
               class="gap-1"
             >
-              {{ PROPERTY_STATUS_LABELS[status] }}
+              {{ t(`status.${status}`) }}
               <Button
                 variant="ghost"
                 size="sm"
@@ -235,7 +237,7 @@ function toggleAdvancedFilters() {
           </div>
           
           <div class="mt-3 flex items-center justify-between text-sm text-muted-foreground">
-            <span>Showing {{ propertiesStore.properties.length }} of {{ propertiesStore.allProperties.length }} properties</span>
+            <span>{{ t('filters.showingProperties', { count: propertiesStore.properties.length, total: propertiesStore.allProperties.length }) }}</span>
             <div class="flex gap-2">
               <Button
                 v-if="filters.search"
@@ -243,14 +245,14 @@ function toggleAdvancedFilters() {
                 size="sm"
                 @click="clearSearch"
               >
-                Clear search
+                {{ t('filters.clearSearch') }}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 @click="clearAllFilters"
               >
-                Clear all
+                {{ t('filters.clearAll') }}
               </Button>
             </div>
           </div>
