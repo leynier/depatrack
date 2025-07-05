@@ -41,7 +41,7 @@ const openAuth = () => {
         <div>
           <h1 class="text-2xl font-bold text-foreground sans-serif">DepaTrack</h1>
           <p class="mt-1 text-sm text-muted-foreground leading-relaxed hidden md:block">
-            Lightweight web app to log and track apartment-rental prospects—everything stored locally in your browser.
+            Lightweight web app to log and track apartment-rental prospects with local-first architecture and offline support.
           </p>
         </div>
         <div class="flex items-center gap-2">

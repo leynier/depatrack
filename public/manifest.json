@@ -1,7 +1,7 @@
 {
   "name": "DepaTrack - Property Tracking Made Simple",
   "short_name": "DepaTrack",
-  "description": "Lightweight web app to log and track apartment-rental prospects. Everything stored locally in your browser for privacy and speed.",
+  "description": "Lightweight web app to log and track apartment-rental prospects with local-first architecture and offline support. Data stored locally with optional cloud sync.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

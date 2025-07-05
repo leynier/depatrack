@@ -35,6 +35,7 @@ export const usePropertiesStore = defineStore('properties', () => {
     }
     properties.value.push(newProperty)
     saveToLocalStorage()
+    syncToCloud() // Sync to Firebase if user is authenticated
   }
 
   function updateProperty(id: string, updates: Partial<PropertyFormData>): void {
@@ -46,6 +47,7 @@ export const usePropertiesStore = defineStore('properties', () => {
         updatedAt: new Date()
       }
       saveToLocalStorage()
+      syncToCloud() // Sync to Firebase if user is authenticated
     }
   }
 
@@ -74,23 +76,28 @@ export const usePropertiesStore = defineStore('properties', () => {
 
 ## Data Persistence
 
-- **Implement localStorage integration** for user data persistence
+- **Local-first architecture** with localStorage as primary storage for offline access
+- **Optional cloud synchronization** via Firebase when user is authenticated
 - **Handle serialization/deserialization** properly for Date objects
 - **Provide fallbacks for corrupted data** with validation
 - **Use debounced saving** for frequent updates to avoid performance issues
+- **Graceful offline/online state handling** with automatic sync when connection restored
 - **Clear invalid data gracefully** when localStorage quota is exceeded
 
 ## Error Handling
 
 ```typescript
-// Good: Proper error handling in actions
+// Good: Proper error handling in actions with local-first approach
 async function loadProperties(): Promise<void> {
   try {
     isLoading.value = true
-    const data = localStorage.getItem('properties')
-    if (data) {
-      properties.value = JSON.parse(data)
+    // Load from localStorage first for immediate access
+    const localData = localStorage.getItem('properties')
+    if (localData) {
+      properties.value = JSON.parse(localData)
     }
+    // Sync with cloud if user is authenticated (background operation)
+    await syncFromCloud()
   } catch (error) {
     console.error('Failed to load properties:', error)
     // Reset to empty state on error

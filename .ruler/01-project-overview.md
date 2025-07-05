@@ -1,6 +1,6 @@
 # DepaTrack Project Overview
 
-DepaTrack is a lightweight property tracking web application that helps users log and track apartment rental prospects. All data is stored locally in the browser for privacy and speed.
+DepaTrack is a lightweight property tracking web application that helps users log and track apartment rental prospects. It follows a local-first architecture with offline support, storing data locally in the browser for speed and privacy, with optional cloud synchronization when signed in.
 
 ## Tech Stack
 
@@ -17,7 +17,7 @@ DepaTrack is a lightweight property tracking web application that helps users lo
 - **Single Page Application** with Vue Router
 - **Component-based architecture** with reusable UI components
 - **Reactive state management** with Pinia stores
-- **Local data persistence** using browser localStorage
+- **Local-first data architecture** with localStorage for offline access and Firebase for cloud synchronization
 - **Mobile-first responsive design** with dark/light theme support
 
 ## Core Features
@@ -28,6 +28,8 @@ DepaTrack is a lightweight property tracking web application that helps users lo
 - Appointment scheduling with date/time fields
 - Mobile-responsive design with floating action buttons
 - Dark/light theme toggle with system preference detection
+- Optional cloud synchronization with Google authentication
+- Offline-first functionality with local data persistence
 
 ## Project Structure
 

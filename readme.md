@@ -1,6 +1,6 @@
 # DepaTrack
 
-Lightweight web app to log and track apartment-rental prospects—everything stored locally in your browser. Everything stored locally in your browser for privacy and speed.
+Lightweight web app to log and track apartment-rental prospects with local-first architecture and offline support. Data is stored locally in your browser for speed and privacy, with optional cloud synchronization when signed in.
 
 ## Getting Started
 
