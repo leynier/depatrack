@@ -1,6 +1,7 @@
 import type { Property } from '@/types/property';
 
 const STORAGE_KEY = 'depatrack_properties';
+const DELETED_PROPERTIES_KEY = 'depatrack_deleted_properties';
 const VERSION_KEY = 'depatrack_version';
 const CURRENT_VERSION = '1.0.0';
 
@@ -78,6 +79,36 @@ export class StorageService {
       console.error('Error saving to localStorage:', error);
       throw new Error('Failed to save data to local storage');
     }
+  }
+
+  private saveDeletedPropertyUuids(uuids: string[]): void {
+    try {
+      localStorage.setItem(DELETED_PROPERTIES_KEY, JSON.stringify(uuids));
+    } catch (error) {
+      console.error('Error saving deleted property UUIDs to localStorage:', error);
+    }
+  }
+
+  getDeletedPropertyUuids(): string[] {
+    try {
+      const data = localStorage.getItem(DELETED_PROPERTIES_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error('Error reading deleted property UUIDs from localStorage:', error);
+      return [];
+    }
+  }
+
+  addDeletedPropertyUuid(uuid: string): void {
+    const uuids = this.getDeletedPropertyUuids();
+    if (!uuids.includes(uuid)) {
+      uuids.push(uuid);
+      this.saveDeletedPropertyUuids(uuids);
+    }
+  }
+
+  clearDeletedPropertyUuids(): void {
+    localStorage.removeItem(DELETED_PROPERTIES_KEY);
   }
 
   getAllProperties(): Property[] {

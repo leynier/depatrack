@@ -173,36 +173,65 @@ export const usePropertiesStore = defineStore('properties', () => {
 
   async function syncWithFirebase(): Promise<void> {
     if (!authStore.user || !isOnline.value) return;
-    
+
     try {
       isSyncing.value = true;
       const syncStartTime = Date.now();
       analyticsService.logSyncStart();
-      
-      // Get Firebase properties
-      const firebaseProperties = await firestoreService.getUserProperties(authStore.user.uid);
-      
-      // If Firebase is empty but we have local properties, migrate them
-      if (firebaseProperties.length === 0 && properties.value.length > 0) {
-        console.log('Migrating local properties to Firebase...');
-        await migrateLocalPropertiesToFirebase();
+
+      const userId = authStore.user.uid;
+      const localProperties = storageService.getAllProperties();
+      const localDeletedUuids = storageService.getDeletedPropertyUuids();
+
+      // 1. Download changes from Firestore
+      let firebaseProperties: Property[] = [];
+      let firebaseDeletedRecords: DeletedPropertyRecord[] = [];
+
+      if (lastSyncTime.value) {
+        // Incremental sync
+        firebaseProperties = await firestoreService.getPropertiesModifiedSince(userId, lastSyncTime.value);
+        firebaseDeletedRecords = await firestoreService.getDeletedPropertiesModifiedSince(userId, lastSyncTime.value);
+      } else {
+        // Full sync on first run or after a long time
+        firebaseProperties = await firestoreService.getUserProperties(userId);
+        firebaseDeletedRecords = await firestoreService.getDeletedProperties(userId);
       }
-      
-      // Get updated Firebase properties after migration
-      const updatedFirebaseProperties = await firestoreService.getUserProperties(authStore.user.uid);
-      
-      // Merge with local properties, preferring newer ones
-      const mergedProperties = await mergeProperties(properties.value, updatedFirebaseProperties);
-      
-      // Update both local and Firebase storage
-      properties.value = mergedProperties;
-      storageService.importProperties(mergedProperties);
-      
-      // Subscribe to real-time updates
+
+      // 2. Merge Firebase changes into local data
+      const mergedProperties = mergeProperties(localProperties, firebaseProperties);
+      const finalProperties = applyFirebaseDeletions(mergedProperties, firebaseDeletedRecords);
+
+      // 3. Identify local changes to upload
+      const { newLocal, updatedLocal, deletedLocal } = identifyLocalChanges(
+        localProperties,
+        finalProperties, // Use finalProperties as the base for comparison
+        localDeletedUuids
+      );
+
+      // 4. Upload local changes to Firestore
+      if (newLocal.length > 0) {
+        console.log(`Uploading ${newLocal.length} new local properties.`);
+        await firestoreService.batchCreateProperties(userId, newLocal);
+      }
+      if (updatedLocal.length > 0) {
+        console.log(`Uploading ${updatedLocal.length} updated local properties.`);
+        await firestoreService.batchUpdateProperties(updatedLocal);
+      }
+      if (deletedLocal.length > 0) {
+        console.log(`Uploading ${deletedLocal.length} deleted local properties.`);
+        await firestoreService.batchDeleteProperties(deletedLocal, userId);
+      }
+
+      // 5. Update local storage with the reconciled data
+      properties.value = finalProperties;
+      storageService.importProperties(finalProperties);
+      storageService.clearDeletedPropertyUuids(); // Clear local deleted records after successful sync
+
+      // 6. Subscribe to real-time updates (if not already subscribed)
       subscribeToFirebaseUpdates();
-      
+
       lastSyncTime.value = new Date();
-      
+
       // Log successful sync
       const syncDuration = Date.now() - syncStartTime;
       analyticsService.logSyncComplete(syncDuration, properties.value.length);
@@ -217,94 +246,83 @@ export const usePropertiesStore = defineStore('properties', () => {
 
   function subscribeToFirebaseUpdates(): void {
     if (!authStore.user || unsubscribeFromFirestore) return;
-    
+
     unsubscribeFromFirestore = firestoreService.subscribeToUserProperties(
       authStore.user.uid,
       async (firebaseProperties) => {
-        // Update local properties with Firebase changes
-        const mergedProperties = await mergeProperties(properties.value, firebaseProperties);
-        properties.value = mergedProperties;
-        storageService.importProperties(mergedProperties);
+        // When real-time updates come in, merge them with current local state
+        // and apply any deletions that might have occurred remotely.
+        const localProperties = storageService.getAllProperties();
+        const firebaseDeletedRecords = await firestoreService.getDeletedProperties(authStore.user!.uid);
+
+        const merged = mergeProperties(localProperties, firebaseProperties);
+        const final = applyFirebaseDeletions(merged, firebaseDeletedRecords);
+
+        properties.value = final;
+        storageService.importProperties(final);
       }
     );
   }
 
-  async function migrateLocalPropertiesToFirebase(): Promise<void> {
-    if (!authStore.user) return;
-    
-    const localProperties = properties.value;
-    for (const property of localProperties) {
-      try {
-        // Assign UUID if property doesn't have one (for backward compatibility)
-        if (!property.uuid) {
-          property.uuid = crypto.randomUUID();
-          storageService.saveProperty(property); // Update localStorage with UUID
-        }
-        
-        const formData: PropertyFormData = {
-          zone: property.zone,
-          price: property.price,
-          status: property.status,
-          requirements: property.requirements,
-          comments: property.comments,
-          link: property.link,
-          location: property.location,
-          whatsapp: property.whatsapp,
-          appointmentDate: property.appointmentDate,
-          isCalendarScheduled: property.isCalendarScheduled
-        };
-        
-        await firestoreService.createProperty(authStore.user.uid, formData, property.uuid);
-        console.log(`Migrated property: ${property.zone} (UUID: ${property.uuid})`);
-      } catch (error) {
-        console.error(`Failed to migrate property ${property.id}:`, error);
-      }
-    }
-  }
+  
 
   async function mergeProperties(localProps: Property[], firebaseProps: Property[]): Promise<Property[]> {
     const merged = new Map<string, Property>();
-    
-    // Get deleted properties to filter them out
-    let deletedUuids = new Set<string>();
-    if (authStore.user) {
-      try {
-        const deletedProperties = await firestoreService.getDeletedProperties(authStore.user.uid);
-        deletedUuids = new Set(deletedProperties.map(d => d.uuid));
-      } catch (error) {
-        console.error('Failed to get deleted properties:', error);
-      }
-    }
-    
-    // Add local properties (keyed by UUID for proper sync)
+
+    // Add local properties to the map
     localProps.forEach(prop => {
-      // Skip deleted properties
-      if (deletedUuids.has(prop.uuid)) {
-        return;
-      }
-      
-      // Assign UUID if missing (backward compatibility)
-      if (!prop.uuid) {
-        prop.uuid = crypto.randomUUID();
-        storageService.saveProperty(prop);
-      }
       merged.set(prop.uuid, prop);
     });
-    
-    // Add/update with Firebase properties (prefer newer ones)
+
+    // Merge with Firebase properties, preferring newer ones
     firebaseProps.forEach(prop => {
-      // Skip deleted properties
-      if (deletedUuids.has(prop.uuid)) {
-        return;
-      }
-      
       const existing = merged.get(prop.uuid);
       if (!existing || prop.updatedAt > existing.updatedAt) {
         merged.set(prop.uuid, prop);
       }
     });
-    
+
     return Array.from(merged.values());
+  }
+
+  function applyFirebaseDeletions(properties: Property[], deletedRecords: DeletedPropertyRecord[]): Property[] {
+    const deletedUuids = new Set(deletedRecords.map(d => d.uuid));
+    return properties.filter(prop => !deletedUuids.has(prop.uuid));
+  }
+
+  function identifyLocalChanges(
+    localBeforeSync: Property[],
+    localAfterSync: Property[],
+    localDeletedUuids: string[]
+  ): { newLocal: Property[]; updatedLocal: Property[]; deletedLocal: string[] } {
+    const newLocal: Property[] = [];
+    const updatedLocal: Property[] = [];
+    const deletedLocal: string[] = [...localDeletedUuids]; // Start with locally marked deletions
+
+    const localBeforeMap = new Map<string, Property>(localBeforeSync.map(p => [p.uuid, p]));
+    const localAfterMap = new Map<string, Property>(localAfterSync.map(p => [p.uuid, p]));
+
+    // Identify new and updated properties
+    localAfterSync.forEach(prop => {
+      const existing = localBeforeMap.get(prop.uuid);
+      if (!existing) {
+        // This property is new locally (created after last sync or imported)
+        newLocal.push(prop);
+      } else if (prop.updatedAt > existing.updatedAt) {
+        // This property was updated locally
+        updatedLocal.push(prop);
+      }
+    });
+
+    // Identify properties deleted locally (not present in localAfterSync but were in localBeforeSync)
+    localBeforeSync.forEach(prop => {
+      if (!localAfterMap.has(prop.uuid) && !deletedLocal.includes(prop.uuid)) {
+        // If it's not in the final merged set and not already marked for deletion
+        deletedLocal.push(prop.uuid);
+      }
+    });
+
+    return { newLocal, updatedLocal, deletedLocal };
   }
 
   async function createProperty(formData: PropertyFormData): Promise<Property> {
@@ -343,14 +361,9 @@ export const usePropertiesStore = defineStore('properties', () => {
         status: property.status
       });
       
-      // Sync with Firebase if authenticated and online
+      // Trigger sync if online
       if (authStore.isAuthenticated && isOnline.value) {
-        try {
-          await firestoreService.createProperty(authStore.user!.uid, formData, propertyUuid);
-        } catch (firebaseError) {
-          console.error('Firebase create failed:', firebaseError);
-          // Continue with local storage - sync will handle it later
-        }
+        syncWithFirebase();
       }
       
       return property;
@@ -406,18 +419,9 @@ export const usePropertiesStore = defineStore('properties', () => {
         analyticsService.logPropertyStatusChange(existingProperty.status, updatedProperty.status);
       }
       
-      // Sync with Firebase if authenticated and online
-      if (authStore.isAuthenticated && isOnline.value && updatedProperty.uuid) {
-        try {
-          // Find Firebase property by UUID to get the correct Firestore document ID
-          const firebaseProperty = await firestoreService.getPropertyByUuid(authStore.user!.uid, updatedProperty.uuid);
-          if (firebaseProperty) {
-            await firestoreService.updateProperty(firebaseProperty.id, formData);
-          }
-        } catch (firebaseError) {
-          console.error('Firebase update failed:', firebaseError);
-          // Continue with local storage - sync will handle it later
-        }
+      // Trigger sync if online
+      if (authStore.isAuthenticated && isOnline.value) {
+        syncWithFirebase();
       }
       
       error.value = null;
@@ -439,6 +443,11 @@ export const usePropertiesStore = defineStore('properties', () => {
       storageService.deleteProperty(id);
       properties.value = properties.value.filter(p => p.id !== id);
       
+      // Mark for deletion in local storage for sync
+      if (property.uuid) {
+        storageService.addDeletedPropertyUuid(property.uuid);
+      }
+      
       // Log analytics event
       analyticsService.logPropertyDelete({
         zone: property.zone,
@@ -446,18 +455,9 @@ export const usePropertiesStore = defineStore('properties', () => {
         status: property.status
       });
       
-      // Sync with Firebase if authenticated and online
-      if (authStore.isAuthenticated && isOnline.value && property.uuid) {
-        try {
-          // Find Firebase property by UUID to get the correct Firestore document ID
-          const firebaseProperty = await firestoreService.getPropertyByUuid(authStore.user!.uid, property.uuid);
-          if (firebaseProperty) {
-            await firestoreService.deleteProperty(firebaseProperty.id, property.uuid, authStore.user!.uid);
-          }
-        } catch (firebaseError) {
-          console.error('Firebase delete failed:', firebaseError);
-          // Continue with local deletion - sync will handle it later
-        }
+      // Trigger sync if online
+      if (authStore.isAuthenticated && isOnline.value) {
+        syncWithFirebase();
       }
       
       error.value = null;
@@ -591,16 +591,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       
       // Sync with Firebase if authenticated and online
       if (authStore.isAuthenticated && isOnline.value && updatedProperty.uuid) {
-        try {
-          // Find Firebase property by UUID to get the correct Firestore document ID
-          const firebaseProperty = await firestoreService.getPropertyByUuid(authStore.user!.uid, updatedProperty.uuid);
-          if (firebaseProperty) {
-            await firestoreService.markCalendarScheduled(firebaseProperty.id);
-          }
-        } catch (firebaseError) {
-          console.error('Firebase calendar update failed:', firebaseError);
-          // Continue with local update - sync will handle it later
-        }
+        syncWithFirebase();
       }
       
       error.value = null;

@@ -12,7 +12,8 @@ import {
   enableNetwork,
   disableNetwork,
   Timestamp,
-  FirestoreError
+  FirestoreError,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import type { Property, PropertyFormData, DeletedPropertyRecord } from '@/types/property';
@@ -106,7 +107,13 @@ export class FirestoreService {
     }
   }
 
-  async createProperty(userId: string, formData: PropertyFormData, uuid?: string): Promise<Property> {
+  async createProperty(
+    userId: string,
+    formData: PropertyFormData,
+    uuid?: string,
+    createdAt?: Date,
+    updatedAt?: Date
+  ): Promise<Property> {
     try {
       const propertyUuid = uuid || crypto.randomUUID();
       
@@ -122,8 +129,8 @@ export class FirestoreService {
         location: formData.location || '',
         whatsapp: formData.whatsapp || '',
         isCalendarScheduled: formData.isCalendarScheduled || false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        createdAt: createdAt ? Timestamp.fromDate(createdAt) : Timestamp.now(),
+        updatedAt: updatedAt ? Timestamp.fromDate(updatedAt) : Timestamp.now()
       };
 
       // Only add appointmentDate if it exists (Firestore doesn't allow undefined)
@@ -138,7 +145,7 @@ export class FirestoreService {
     }
   }
 
-  async updateProperty(propertyId: string, formData: PropertyFormData): Promise<Property> {
+  async updateProperty(propertyId: string, formData: PropertyFormData, updatedAt?: Date): Promise<Property> {
     try {
       const docRef = doc(db, this.COLLECTION_NAME, propertyId);
       
@@ -152,7 +159,7 @@ export class FirestoreService {
         location: formData.location || '',
         whatsapp: formData.whatsapp || '',
         isCalendarScheduled: formData.isCalendarScheduled || false,
-        updatedAt: Timestamp.now()
+        updatedAt: updatedAt ? Timestamp.fromDate(updatedAt) : Timestamp.now()
       };
 
       // Only add appointmentDate if it exists (Firestore doesn't allow undefined)
@@ -224,6 +231,108 @@ export class FirestoreService {
       await updateDoc(docRef, {
         isCalendarScheduled: true,
         updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  async batchCreateProperties(userId: string, properties: Property[]): Promise<void> {
+    const batch = writeBatch(db);
+    properties.forEach(property => {
+      const docRef = doc(collection(db, this.COLLECTION_NAME));
+      const firestoreProperty: Omit<FirestoreProperty, 'id'> = {
+        userId,
+        uuid: property.uuid,
+        zone: property.zone,
+        price: property.price || 0,
+        status: property.status,
+        requirements: property.requirements || [],
+        comments: property.comments || '',
+        link: property.link || '',
+        location: property.location || '',
+        whatsapp: property.whatsapp || '',
+        isCalendarScheduled: property.isCalendarScheduled || false,
+        createdAt: Timestamp.fromDate(property.createdAt),
+        updatedAt: Timestamp.fromDate(property.updatedAt)
+      };
+      if (property.appointmentDate) {
+        firestoreProperty.appointmentDate = Timestamp.fromDate(property.appointmentDate);
+      }
+      batch.set(docRef, firestoreProperty);
+    });
+    await batch.commit();
+  }
+
+  async batchUpdateProperties(properties: Property[]): Promise<void> {
+    const batch = writeBatch(db);
+    for (const property of properties) {
+      const firebaseProperty = await this.getPropertyByUuid(property.userId!, property.uuid);
+      if (firebaseProperty) {
+        const docRef = doc(db, this.COLLECTION_NAME, firebaseProperty.id);
+        const updateData: Partial<FirestoreProperty> = {
+          zone: property.zone,
+          price: property.price || 0,
+          status: property.status,
+          requirements: property.requirements || [],
+          comments: property.comments || '',
+          link: property.link || '',
+          location: property.location || '',
+          whatsapp: property.whatsapp || '',
+          isCalendarScheduled: property.isCalendarScheduled || false,
+          updatedAt: Timestamp.fromDate(property.updatedAt)
+        };
+        if (property.appointmentDate) {
+          updateData.appointmentDate = Timestamp.fromDate(property.appointmentDate);
+        }
+        batch.update(docRef, updateData);
+      }
+    }
+    await batch.commit();
+  }
+
+  async batchDeleteProperties(propertyUuids: string[], userId: string): Promise<void> {
+    const batch = writeBatch(db);
+    for (const uuid of propertyUuids) {
+      const firebaseProperty = await this.getPropertyByUuid(userId, uuid);
+      if (firebaseProperty) {
+        const docRef = doc(db, this.COLLECTION_NAME, firebaseProperty.id);
+        batch.delete(docRef);
+        await this.recordPropertyDeletion(uuid, userId); // Record deletion for sync
+      }
+    }
+    await batch.commit();
+  }
+
+  async getPropertiesModifiedSince(userId: string, lastSyncTime: Date): Promise<Property[]> {
+    try {
+      const q = query(
+        collection(db, this.COLLECTION_NAME),
+        where('userId', '==', userId),
+        where('updatedAt', '>', Timestamp.fromDate(lastSyncTime))
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => this.mapFirestoreProperty(doc.data() as FirestoreProperty, doc.id));
+    } catch (error) {
+      throw this.handleFirestoreError(error as FirestoreError);
+    }
+  }
+
+  async getDeletedPropertiesModifiedSince(userId: string, lastSyncTime: Date): Promise<DeletedPropertyRecord[]> {
+    try {
+      const q = query(
+        collection(db, this.DELETED_COLLECTION_NAME),
+        where('userId', '==', userId),
+        where('deletedAt', '>', Timestamp.fromDate(lastSyncTime))
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data() as FirestoreDeletedProperty;
+        return {
+          uuid: data.uuid,
+          deviceId: data.deviceId,
+          deletedAt: data.deletedAt.toDate()
+        };
       });
     } catch (error) {
       throw this.handleFirestoreError(error as FirestoreError);
