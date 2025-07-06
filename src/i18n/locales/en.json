@@ -259,5 +259,15 @@
   },
   "locale": {
     "dateFormat": "en-US"
+  },
+  "sort": {
+    "title": "Sort Properties",
+    "sort": "Sort",
+    "sortBy": "Sort by",
+    "sortedBy": "Sorted by",
+    "direction": "Direction",
+    "ascending": "Ascending",
+    "descending": "Descending",
+    "currentSort": "Current sort"
   }
 }

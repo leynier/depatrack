@@ -45,10 +45,10 @@ export interface PropertyFormData {
 }
 
 export interface PropertyFilters {
-  search?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  statuses?: PropertyStatus[];
+  search?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  statuses?: PropertyStatus[] | null;
 }
 
 export type SortField = 'zone' | 'price' | 'status' | 'appointmentDate';

@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { useLanguage } from '@/composables/useLanguage';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { usePropertiesStore } from '@/stores/properties';
 import { formatCurrency } from '@/utils/currency';
 import { PROPERTY_STATUS_LABELS, PROPERTY_STATUS_COLORS, type Property } from '@/types/property';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, CalendarIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
+import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, CalendarIcon, ChevronUpIcon, ChevronDownIcon, Bars3BottomLeftIcon } from '@heroicons/vue/24/outline';
 import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/solid';
 import PropertyCard from '@/components/PropertyCard.vue';
+import SortModal from '@/components/SortModal.vue';
 import { openGoogleCalendar } from '@/utils/calendar';
 import type { SortField } from '@/types/property';
 
@@ -26,6 +27,26 @@ const emit = defineEmits<{
 
 const { t } = useLanguage();
 const propertiesStore = usePropertiesStore();
+
+const showSortModal = ref(false);
+
+const sortOptions: Array<{ field: SortField; label: string }> = [
+  { field: 'zone', label: t('property.zone') },
+  { field: 'price', label: t('property.price') },
+  { field: 'status', label: t('property.status') },
+  { field: 'appointmentDate', label: t('property.appointment') }
+];
+
+const currentSortLabel = computed(() => {
+  const currentSort = propertiesStore.sort;
+  const option = sortOptions.find(opt => opt.field === currentSort.field);
+  return option ? option.label : '';
+});
+
+const currentSortIcon = computed(() => {
+  const currentSort = propertiesStore.sort;
+  return currentSort.direction === 'asc' ? ChevronUpIcon : ChevronDownIcon;
+});
 
 function handleEdit(id: string) {
   emit('edit', id);
@@ -315,7 +336,28 @@ function getSortIcon(field: SortField) {
   </div>
 
   <!-- Mobile Card View -->
-  <div class="md:hidden space-y-3">
+  <div class="md:hidden space-y-2">
+    <!-- Sort Controls for Mobile -->
+    <div class="flex items-center justify-between bg-background border border-border rounded-md p-3">
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-muted-foreground">{{ t('sort.sortedBy') }}</span>
+        <Badge variant="outline" class="text-xs">
+          {{ currentSortLabel }}
+          <component :is="currentSortIcon" class="h-3 w-3 ml-1" />
+        </Badge>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        @click="showSortModal = true"
+        class="text-xs"
+      >
+        <Bars3BottomLeftIcon class="h-4 w-4 mr-1" />
+        {{ t('sort.sort') }}
+      </Button>
+    </div>
+
+    <!-- Property Cards -->
     <PropertyCard
       v-for="property in properties"
       :key="property.id"
@@ -323,5 +365,8 @@ function getSortIcon(field: SortField) {
       @edit="handleEdit"
       @delete="handleDelete"
     />
+
+    <!-- Sort Modal -->
+    <SortModal v-model:open="showSortModal" />
   </div>
 </template>

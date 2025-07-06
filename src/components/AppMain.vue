@@ -221,7 +221,7 @@ defineExpose({
 <template>
   <main class="max-w-7xl mx-auto px-6 py-4">
     <!-- Toolbar -->
-    <div class="mb-6 flex items-center gap-3">
+    <div class="mb-2 md:mb-3 flex items-center gap-3">
       <!-- Search Box and Filters Button -->
       <div class="flex-1 relative">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -287,10 +287,10 @@ defineExpose({
     </div>
 
     <!-- Filter Badges -->
-    <div v-if="hasActiveFilters" class="mb-4 flex flex-wrap gap-2">
+    <div v-if="hasActiveFilters" class="mb-2 md:mb-3 flex flex-wrap gap-2">
       <!-- Search Badge -->
       <Badge 
-        v-if="propertiesStore.filters.search"
+        v-if="propertiesStore.filters.search && propertiesStore.filters.search !== null"
         variant="secondary"
         class="gap-1 px-2 py-1"
       >
@@ -302,7 +302,7 @@ defineExpose({
 
       <!-- Min Price Badge -->
       <Badge 
-        v-if="propertiesStore.filters.minPrice !== undefined"
+        v-if="propertiesStore.filters.minPrice !== undefined && propertiesStore.filters.minPrice !== null"
         variant="secondary"
         class="gap-1 px-2 py-1"
       >
@@ -314,7 +314,7 @@ defineExpose({
 
       <!-- Max Price Badge -->
       <Badge 
-        v-if="propertiesStore.filters.maxPrice !== undefined"
+        v-if="propertiesStore.filters.maxPrice !== undefined && propertiesStore.filters.maxPrice !== null"
         variant="secondary"
         class="gap-1 px-2 py-1"
       >
@@ -326,7 +326,7 @@ defineExpose({
 
       <!-- Status Badges -->
       <Badge 
-        v-for="status in propertiesStore.filters.statuses || []"
+        v-for="status in (propertiesStore.filters.statuses && propertiesStore.filters.statuses !== null) ? propertiesStore.filters.statuses : []"
         :key="status"
         variant="secondary"
         class="gap-1 px-2 py-1"

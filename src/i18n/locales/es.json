@@ -259,5 +259,15 @@
   },
   "locale": {
     "dateFormat": "es-ES"
+  },
+  "sort": {
+    "title": "Ordenar Propiedades",
+    "sort": "Ordenar",
+    "sortBy": "Ordenar por",
+    "sortedBy": "Ordenado por",
+    "direction": "Dirección",
+    "ascending": "Ascendente",
+    "descending": "Descendente",
+    "currentSort": "Orden actual"
   }
 }

@@ -248,7 +248,15 @@ export function useUserSettings() {
   };
 
   const setFilters = (filters: PropertyFilters): void => {
-    updateSettings({ filters });
+    // Convert undefined values to null for Firestore compatibility
+    const cleanFilters: PropertyFilters = {
+      search: filters.search ?? null,
+      minPrice: filters.minPrice ?? null,
+      maxPrice: filters.maxPrice ?? null,
+      statuses: filters.statuses ?? null
+    };
+    
+    updateSettings({ filters: cleanFilters });
   };
 
   const setSort = (sort: PropertySort): void => {

@@ -45,7 +45,7 @@ export const usePropertiesStore = defineStore('properties', () => {
   const filteredProperties = computed(() => {
     let filtered = [...properties.value];
 
-    if (filters.value.search) {
+    if (filters.value.search && filters.value.search !== null) {
       const searchTerm = filters.value.search.toLowerCase();
       filtered = filtered.filter(property => 
         property.zone.toLowerCase().includes(searchTerm) ||
@@ -59,15 +59,15 @@ export const usePropertiesStore = defineStore('properties', () => {
       );
     }
 
-    if (filters.value.minPrice !== undefined) {
+    if (filters.value.minPrice !== undefined && filters.value.minPrice !== null) {
       filtered = filtered.filter(property => property.price >= filters.value.minPrice!);
     }
 
-    if (filters.value.maxPrice !== undefined) {
+    if (filters.value.maxPrice !== undefined && filters.value.maxPrice !== null) {
       filtered = filtered.filter(property => property.price <= filters.value.maxPrice!);
     }
 
-    if (filters.value.statuses && filters.value.statuses.length > 0) {
+    if (filters.value.statuses && filters.value.statuses !== null && filters.value.statuses.length > 0) {
       filtered = filtered.filter(property => 
         filters.value.statuses!.includes(property.status)
       );
@@ -156,10 +156,10 @@ export const usePropertiesStore = defineStore('properties', () => {
 
   const hasActiveFilters = computed(() => {
     return !!(
-      filters.value.search ||
-      filters.value.minPrice !== undefined ||
-      filters.value.maxPrice !== undefined ||
-      (filters.value.statuses && filters.value.statuses.length > 0)
+      (filters.value.search && filters.value.search !== null) ||
+      (filters.value.minPrice !== undefined && filters.value.minPrice !== null) ||
+      (filters.value.maxPrice !== undefined && filters.value.maxPrice !== null) ||
+      (filters.value.statuses && filters.value.statuses !== null && filters.value.statuses.length > 0)
     );
   });
 
