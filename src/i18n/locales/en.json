@@ -144,7 +144,8 @@
     "markAsNotScheduled": "Mark as not scheduled",
     "openLink": "Open link",
     "openLocation": "Open location",
-    "openWhatsApp": "Open WhatsApp"
+    "openWhatsApp": "Open WhatsApp",
+    "toggleDetails": "Toggle property details"
   },
   "status": {
     "available": "Available",

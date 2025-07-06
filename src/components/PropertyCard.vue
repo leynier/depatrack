@@ -121,24 +121,28 @@ function toggleCalendarStatus() {
 <template>
   <div class="bg-background border border-border rounded-md p-4 space-y-3">
     <!-- Main Info (Always Visible) -->
-    <div class="flex items-start justify-between">
-      <div class="flex-1">
+    <div 
+      class="flex items-start justify-between cursor-pointer select-none"
+      @click="toggleExpanded"
+      role="button"
+      tabindex="0"
+      @keydown.enter="toggleExpanded"
+      @keydown.space.prevent="toggleExpanded"
+      :aria-expanded="isExpanded"
+      :aria-label="t('property.toggleDetails')"
+    >
+      <div class="flex-1 pointer-events-none">
         <h3 class="text-sm font-medium text-foreground">{{ property.zone }}</h3>
         <p class="text-lg font-semibold text-foreground mt-1">{{ formatCurrency(property.price) }}</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 pointer-events-none">
         <Badge :class="PROPERTY_STATUS_COLORS[property.status]">
           {{ t(`status.${property.status}`) }}
         </Badge>
-        <Button
-          variant="ghost"
-          size="icon"
-          @click="toggleExpanded"
-          class="h-8 w-8"
-        >
+        <div class="h-8 w-8 flex items-center justify-center">
           <ChevronDownIcon v-if="!isExpanded" class="h-4 w-4" />
           <ChevronUpIcon v-else class="h-4 w-4" />
-        </Button>
+        </div>
       </div>
     </div>
 

@@ -144,7 +144,8 @@
     "markAsNotScheduled": "Marcar como no agendada",
     "openLink": "Abrir enlace",
     "openLocation": "Abrir ubicación",
-    "openWhatsApp": "Abrir WhatsApp"
+    "openWhatsApp": "Abrir WhatsApp",
+    "toggleDetails": "Alternar detalles de propiedad"
   },
   "status": {
     "available": "Disponible",
