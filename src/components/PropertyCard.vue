@@ -187,6 +187,12 @@ function toggleCalendarStatus() {
         </div>
       </div>
 
+      <!-- Real Estate -->
+      <div v-if="property.realEstate">
+        <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{{ t('property.realEstate') }}</h4>
+        <p class="text-sm text-foreground">{{ property.realEstate }}</p>
+      </div>
+
       <!-- Comments -->
       <div v-if="property.comments">
         <h4 class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{{ t('property.comments') }}</h4>

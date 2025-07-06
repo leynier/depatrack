@@ -38,6 +38,7 @@ const formData = ref<PropertyFormData>({
   link: '',
   location: '',
   whatsapp: '',
+  realEstate: '',
   appointmentDate: null,
   isCalendarScheduled: false
 });
@@ -93,6 +94,7 @@ function resetForm() {
     link: '',
     location: '',
     whatsapp: '',
+    realEstate: '',
     appointmentDate: null,
     isCalendarScheduled: false
   };
@@ -113,6 +115,7 @@ function loadPropertyData() {
         link: property.link || '',
         location: property.location || '',
         whatsapp: property.whatsapp || '',
+        realEstate: property.realEstate || '',
         appointmentDate: property.appointmentDate || null,
         isCalendarScheduled: property.isCalendarScheduled || false
       };
@@ -301,6 +304,16 @@ function handleClose() {
         </div>
 
         <div class="space-y-2">
+          <Label for="realEstate">{{ t('property.realEstate') }}</Label>
+          <Input
+            id="realEstate"
+            v-model="formData.realEstate"
+            type="text"
+            :placeholder="t('property.placeholder.realEstate')"
+          />
+        </div>
+
+        <div class="space-y-2">
           <Label>{{ t('property.requirements') }}</Label>
           <div class="space-y-2">
             <!-- Existing requirements -->
@@ -382,6 +395,7 @@ function handleClose() {
           />
           <p v-if="errors.location" class="text-sm text-destructive">{{ errors.location }}</p>
         </div>
+
 
         <DialogFooter>
           <Button type="button" variant="outline" @click="handleClose">

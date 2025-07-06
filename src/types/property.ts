@@ -25,6 +25,7 @@ export interface Property {
   link?: string;
   location?: string;
   whatsapp?: string;
+  realEstate?: string; // Real estate agency/company
   appointmentDate?: Date;
   isCalendarScheduled?: boolean;
   createdAt: Date;
@@ -40,6 +41,7 @@ export interface PropertyFormData {
   link?: string;
   location?: string;
   whatsapp?: string;
+  realEstate?: string;
   appointmentDate?: Date | null;
   isCalendarScheduled?: boolean;
 }

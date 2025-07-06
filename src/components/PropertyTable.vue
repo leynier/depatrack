@@ -196,6 +196,7 @@ function getSortIcon(field: SortField) {
               <component :is="getSortIcon('appointmentDate')" v-if="getSortIcon('appointmentDate')" class="h-3 w-3" />
             </button>
           </TableHead>
+          <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-32 px-6 text-muted-foreground">{{ t('property.realEstate') }}</TableHead>
           <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">{{ t('property.requirements') }}</TableHead>
           <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">{{ t('property.comments') }}</TableHead>
           <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-20 px-6 text-muted-foreground">{{ t('property.links') }}</TableHead>
@@ -246,6 +247,17 @@ function getSortIcon(field: SortField) {
                   {{ property.isCalendarScheduled ? '✓' : '○' }}
                 </Button>
               </div>
+            </div>
+            <div v-else class="text-sm text-muted-foreground">-</div>
+          </TableCell>
+          
+          <TableCell class="py-4 px-6 max-w-[200px]">
+            <div
+              v-if="property.realEstate"
+              class="text-sm text-foreground truncate"
+              :title="property.realEstate"
+            >
+              {{ truncateText(property.realEstate, 30) }}
             </div>
             <div v-else class="text-sm text-muted-foreground">-</div>
           </TableCell>

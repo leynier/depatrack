@@ -119,6 +119,7 @@
     "links": "Links",
     "location": "Location",
     "whatsapp": "WhatsApp",
+    "realEstate": "Real Estate",
     "appointment": "Appointment",
     "appointmentDate": "Appointment Date",
     "addProperty": "Add Property",
@@ -137,7 +138,8 @@
       "comments": "Enter additional comments or observations",
       "link": "https://example.com/property",
       "whatsapp": "+12345678901",
-      "location": "https://maps.google.com/ ..."
+      "location": "https://maps.google.com/ ...",
+      "realEstate": "Enter real estate agency name"
     },
     "openGoogleCalendar": "Open Google Calendar",
     "markAsScheduled": "Mark as scheduled",

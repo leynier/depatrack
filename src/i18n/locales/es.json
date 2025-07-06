@@ -119,6 +119,7 @@
     "links": "Enlaces",
     "location": "Ubicación",
     "whatsapp": "WhatsApp",
+    "realEstate": "Inmobiliaria",
     "appointment": "Cita",
     "appointmentDate": "Fecha de Cita",
     "addProperty": "Agregar Propiedad",
@@ -137,7 +138,8 @@
       "comments": "Ingresa comentarios adicionales u observaciones",
       "link": "https://ejemplo.com/propiedad",
       "whatsapp": "+12345678901",
-      "location": "https://maps.google.com/ ..."
+      "location": "https://maps.google.com/ ...",
+      "realEstate": "Ingresa el nombre de la inmobiliaria"
     },
     "openGoogleCalendar": "Abrir en Google Calendar",
     "markAsScheduled": "Marcar como agendada",

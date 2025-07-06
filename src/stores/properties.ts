@@ -55,7 +55,8 @@ export const usePropertiesStore = defineStore('properties', () => {
         property.status.toLowerCase().includes(searchTerm) ||
         property.link?.toLowerCase().includes(searchTerm) ||
         property.location?.toLowerCase().includes(searchTerm) ||
-        property.whatsapp?.toLowerCase().includes(searchTerm)
+        property.whatsapp?.toLowerCase().includes(searchTerm) ||
+        property.realEstate?.toLowerCase().includes(searchTerm)
       );
     }
 
@@ -369,6 +370,7 @@ export const usePropertiesStore = defineStore('properties', () => {
         link: formData.link || '',
         location: formData.location || '',
         whatsapp: formData.whatsapp || '',
+        realEstate: formData.realEstate || '',
         appointmentDate: formData.appointmentDate || undefined,
         isCalendarScheduled: formData.isCalendarScheduled || false,
         createdAt: new Date(),
@@ -428,6 +430,7 @@ export const usePropertiesStore = defineStore('properties', () => {
       link: formData.link || '',
       location: formData.location || '',
       whatsapp: formData.whatsapp || '',
+      realEstate: formData.realEstate || '',
       appointmentDate: formData.appointmentDate || undefined,
       isCalendarScheduled: formData.isCalendarScheduled || false,
       updatedAt: new Date()
