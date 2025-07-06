@@ -11,7 +11,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ArrowDownTrayIcon, ArrowUpTrayIcon, FunnelIcon, PlusIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, FunnelIcon, PlusIcon, MagnifyingGlassIcon, XMarkIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 import { FunnelIcon as FunnelSolidIcon } from '@heroicons/vue/24/solid';
 import { exportToCSV, downloadCSV, parseCSV, generateCSVFilename } from '@/utils/csv';
 import { useLanguage } from '@/composables/useLanguage';
@@ -21,6 +21,7 @@ const { t } = useLanguage();
 
 const showForm = ref(false);
 const showFilters = ref(false);
+const showColumnSettings = ref(false);
 const showDeleteConfirm = ref(false);
 const editingProperty = ref<string | null>(null);
 const deletingProperty = ref<Property | null>(null);
@@ -152,6 +153,10 @@ function handleFiltersOpen() {
   showFilters.value = true;
 }
 
+function handleColumnSettingsOpen() {
+  showColumnSettings.value = true;
+}
+
 function handleDeleteRequest(property: Property) {
   deletingProperty.value = property;
   showDeleteConfirm.value = true;
@@ -221,8 +226,8 @@ defineExpose({
 <template>
   <main class="max-w-7xl mx-auto px-6 py-4">
     <!-- Toolbar -->
-    <div class="mb-2 md:mb-3 flex items-center gap-3">
-      <!-- Search Box and Filters Button -->
+    <div class="mb-2 md:mb-3 flex items-center gap-2">
+      <!-- Search Box -->
       <div class="flex-1 relative">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <MagnifyingGlassIcon class="h-4 w-4 text-muted-foreground" />
@@ -250,40 +255,48 @@ defineExpose({
         <FunnelIcon v-else class="h-4 w-4" />
       </Button>
 
-      <!-- Action Buttons - Right Side (Desktop) -->
-      <div class="hidden md:flex items-center gap-2">
-        <!-- Download Button -->
-        <Button 
-          variant="outline" 
-          size="icon" 
-          @click="handleExport"
-          class="border-border hover:bg-muted"
-          :title="t('export.title')"
-        >
-          <ArrowDownTrayIcon class="h-4 w-4" />
-        </Button>
+      <!-- Column Settings Button (Desktop only) -->
+      <Button 
+        variant="outline" 
+        size="icon" 
+        @click="handleColumnSettingsOpen"
+        class="hidden md:flex border-border hover:bg-muted"
+        :title="t('columns.configure')"
+      >
+        <AdjustmentsHorizontalIcon class="h-4 w-4" />
+      </Button>
 
-        <!-- Upload Button -->
-        <Button 
-          variant="outline" 
-          size="icon" 
-          @click="handleImportClick"
-          :disabled="isImporting"
-          class="border-border hover:bg-muted"
-          :title="t('import.title')"
-        >
-          <ArrowUpTrayIcon class="h-4 w-4" />
-        </Button>
+      <!-- Export Button (Desktop only) -->
+      <Button 
+        variant="outline" 
+        size="icon" 
+        @click="handleExport"
+        class="hidden md:flex border-border hover:bg-muted"
+        :title="t('export.title')"
+      >
+        <ArrowDownTrayIcon class="h-4 w-4" />
+      </Button>
 
-        <!-- Add Button -->
-        <Button 
-          @click="handleAddProperty"
-          class="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg rounded-md"
-          :title="t('property.addProperty')"
-        >
-          <PlusIcon class="h-4 w-4" />
-        </Button>
-      </div>
+      <!-- Import Button (Desktop only) -->
+      <Button 
+        variant="outline" 
+        size="icon" 
+        @click="handleImportClick"
+        :disabled="isImporting"
+        class="hidden md:flex border-border hover:bg-muted"
+        :title="t('import.title')"
+      >
+        <ArrowUpTrayIcon class="h-4 w-4" />
+      </Button>
+
+      <!-- Add Button (Desktop only) -->
+      <Button 
+        @click="handleAddProperty"
+        class="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg rounded-md"
+        :title="t('property.addProperty')"
+      >
+        <PlusIcon class="h-4 w-4" />
+      </Button>
     </div>
 
     <!-- Filter Badges -->
@@ -357,8 +370,10 @@ defineExpose({
     <div v-else>
       <PropertyTable 
         :properties="properties"
+        :show-column-settings="showColumnSettings"
         @edit="handleEditProperty"
         @delete="handleDeleteRequest"
+        @update:show-column-settings="showColumnSettings = $event"
       />
     </div>
 

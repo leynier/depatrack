@@ -147,7 +147,14 @@
     "openLink": "Abrir enlace",
     "openLocation": "Abrir ubicación",
     "openWhatsApp": "Abrir WhatsApp",
-    "toggleDetails": "Alternar detalles de propiedad"
+    "toggleDetails": "Alternar detalles de propiedad",
+    "viewDetails": "Ver detalles",
+    "viewProperty": "Ver Propiedad",
+    "viewPropertyDescription": "Ver información detallada de esta propiedad",
+    "scheduled": "Agendada",
+    "notScheduled": "No agendada",
+    "createdAt": "Creada el",
+    "updatedAt": "Actualizada el"
   },
   "status": {
     "available": "Disponible",
@@ -271,5 +278,25 @@
     "ascending": "Ascendente",
     "descending": "Descendente",
     "currentSort": "Orden actual"
+  },
+  "columns": {
+    "title": "Configurar Columnas",
+    "configure": "Configurar",
+    "description": "Elige qué columnas mostrar en la vista de tabla de escritorio",
+    "alwaysVisible": "Siempre Visibles",
+    "configurable": "Columnas Configurables",
+    "resetToDefault": "Restablecer por Defecto",
+    "zoneDescription": "Zona o ubicación de la propiedad",
+    "priceDescription": "Precio de alquiler",
+    "statusDescription": "Estado actual",
+    "actionsDescription": "Acciones para ver, editar y eliminar",
+    "appointmentDescription": "Fecha de cita y estado de calendario",
+    "realEstateDescription": "Nombre de la inmobiliaria",
+    "requirementsDescription": "Lista de requisitos de la propiedad",
+    "commentsDescription": "Comentarios adicionales y observaciones",
+    "linksDescription": "Enlaces de la propiedad (sitio web, ubicación, WhatsApp)"
+  },
+  "table": {
+    "properties": "Propiedades"
   }
 }

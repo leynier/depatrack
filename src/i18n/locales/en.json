@@ -147,7 +147,14 @@
     "openLink": "Open link",
     "openLocation": "Open location",
     "openWhatsApp": "Open WhatsApp",
-    "toggleDetails": "Toggle property details"
+    "toggleDetails": "Toggle property details",
+    "viewDetails": "View details",
+    "viewProperty": "View Property",
+    "viewPropertyDescription": "View detailed information about this property",
+    "scheduled": "Scheduled",
+    "notScheduled": "Not scheduled",
+    "createdAt": "Created at",
+    "updatedAt": "Updated at"
   },
   "status": {
     "available": "Available",
@@ -271,5 +278,25 @@
     "ascending": "Ascending",
     "descending": "Descending",
     "currentSort": "Current sort"
+  },
+  "columns": {
+    "title": "Configure Columns",
+    "configure": "Configure",
+    "description": "Choose which columns to display in the desktop table view",
+    "alwaysVisible": "Always Visible",
+    "configurable": "Configurable Columns",
+    "resetToDefault": "Reset to Default",
+    "zoneDescription": "Property zone or location",
+    "priceDescription": "Rental price",
+    "statusDescription": "Current status",
+    "actionsDescription": "View, edit, and delete actions",
+    "appointmentDescription": "Appointment date and calendar status",
+    "realEstateDescription": "Real estate agency name",
+    "requirementsDescription": "Property requirements list",
+    "commentsDescription": "Additional comments and observations",
+    "linksDescription": "Property links (website, location, WhatsApp)"
+  },
+  "table": {
+    "properties": "Properties"
   }
 }

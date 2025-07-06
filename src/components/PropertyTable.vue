@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useLanguage } from '@/composables/useLanguage';
+import { useUserSettings } from '@/composables/useUserSettings';
 import { computed, ref } from 'vue';
 import { usePropertiesStore } from '@/stores/properties';
 import { formatCurrency } from '@/utils/currency';
@@ -7,15 +8,18 @@ import { PROPERTY_STATUS_LABELS, PROPERTY_STATUS_COLORS, type Property } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, CalendarIcon, ChevronUpIcon, ChevronDownIcon, Bars3BottomLeftIcon } from '@heroicons/vue/24/outline';
+import { PencilIcon, TrashIcon, GlobeAltIcon, MapPinIcon, CalendarIcon, ChevronUpIcon, ChevronDownIcon, Bars3BottomLeftIcon, EyeIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/solid';
 import PropertyCard from '@/components/PropertyCard.vue';
 import SortModal from '@/components/SortModal.vue';
+import ColumnSettingsModal from '@/components/ColumnSettingsModal.vue';
+import PropertyViewModal from '@/components/PropertyViewModal.vue';
 import { openGoogleCalendar } from '@/utils/calendar';
 import type { SortField } from '@/types/property';
 
 interface Props {
   properties: Property[];
+  showColumnSettings?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -23,12 +27,38 @@ const emit = defineEmits<{
   edit: [id: string];
   delete: [property: Property];
   calendarScheduled: [property: Property];
+  'update:showColumnSettings': [value: boolean];
 }>();
 
 const { t } = useLanguage();
 const propertiesStore = usePropertiesStore();
+const userSettings = useUserSettings();
+
+// Safe computed for column visibility with fallback
+const columnVisibility = computed(() => {
+  const visibility = userSettings.columnVisibility();
+  return visibility || {
+    zone: true,
+    price: true,
+    status: true,
+    actions: true,
+    appointment: true,
+    realEstate: true,
+    requirements: true,
+    comments: true,
+    links: true
+  };
+});
 
 const showSortModal = ref(false);
+const showPropertyView = ref(false);
+const selectedProperty = ref<Property | null>(null);
+
+// Use prop for column settings modal
+const columnSettingsOpen = computed({
+  get: () => props.showColumnSettings || false,
+  set: (value: boolean) => emit('update:showColumnSettings', value)
+});
 
 const sortOptions: Array<{ field: SortField; label: string }> = [
   { field: 'zone', label: t('property.zone') },
@@ -49,6 +79,17 @@ const currentSortIcon = computed(() => {
 });
 
 function handleEdit(id: string) {
+  emit('edit', id);
+}
+
+function handleViewDetails(property: Property) {
+  selectedProperty.value = property;
+  showPropertyView.value = true;
+}
+
+function handleViewModalEdit(id: string) {
+  showPropertyView.value = false;
+  selectedProperty.value = null;
   emit('edit', id);
 }
 
@@ -160,6 +201,7 @@ function getSortIcon(field: SortField) {
     <Table>
       <TableHeader class="bg-background">
         <TableRow class="border-b border-border">
+          <!-- Always visible: Zone -->
           <TableHead class="w-32 px-6">
             <button 
               @click="handleSort('zone')"
@@ -169,6 +211,7 @@ function getSortIcon(field: SortField) {
               <component :is="getSortIcon('zone')" v-if="getSortIcon('zone')" class="h-3 w-3" />
             </button>
           </TableHead>
+          <!-- Always visible: Price -->
           <TableHead class="w-28 px-6">
             <button 
               @click="handleSort('price')"
@@ -178,6 +221,7 @@ function getSortIcon(field: SortField) {
               <component :is="getSortIcon('price')" v-if="getSortIcon('price')" class="h-3 w-3" />
             </button>
           </TableHead>
+          <!-- Always visible: Status -->
           <TableHead class="w-24 px-6">
             <button 
               @click="handleSort('status')"
@@ -187,7 +231,8 @@ function getSortIcon(field: SortField) {
               <component :is="getSortIcon('status')" v-if="getSortIcon('status')" class="h-3 w-3" />
             </button>
           </TableHead>
-          <TableHead class="w-40 px-6">
+          <!-- Configurable: Appointment -->
+          <TableHead v-if="columnVisibility.appointment" class="w-40 px-6">
             <button 
               @click="handleSort('appointmentDate')"
               class="flex items-center gap-1 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors w-full justify-center"
@@ -196,32 +241,41 @@ function getSortIcon(field: SortField) {
               <component :is="getSortIcon('appointmentDate')" v-if="getSortIcon('appointmentDate')" class="h-3 w-3" />
             </button>
           </TableHead>
-          <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-32 px-6 text-muted-foreground">{{ t('property.realEstate') }}</TableHead>
-          <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">{{ t('property.requirements') }}</TableHead>
-          <TableHead class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">{{ t('property.comments') }}</TableHead>
-          <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-20 px-6 text-muted-foreground">{{ t('property.links') }}</TableHead>
-          <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-20 px-6 text-muted-foreground">{{ t('common.actions') }}</TableHead>
+          <!-- Configurable: Real Estate -->
+          <TableHead v-if="columnVisibility.realEstate" class="text-left text-xs font-medium uppercase tracking-wider w-32 px-6 text-muted-foreground">{{ t('property.realEstate') }}</TableHead>
+          <!-- Configurable: Requirements -->
+          <TableHead v-if="columnVisibility.requirements" class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">{{ t('property.requirements') }}</TableHead>
+          <!-- Configurable: Comments -->
+          <TableHead v-if="columnVisibility.comments" class="text-left text-xs font-medium uppercase tracking-wider w-40 px-6 text-muted-foreground">{{ t('property.comments') }}</TableHead>
+          <!-- Configurable: Links -->
+          <TableHead v-if="columnVisibility.links" class="text-center text-xs font-medium uppercase tracking-wider w-20 px-6 text-muted-foreground">{{ t('property.links') }}</TableHead>
+          <!-- Always visible: Actions -->
+          <TableHead class="text-center text-xs font-medium uppercase tracking-wider w-24 px-6 text-muted-foreground">{{ t('common.actions') }}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody class="bg-background divide-y divide-border">
         <TableRow v-for="property in properties" :key="property.id" class="hover:bg-muted/50 transition-colors">
+          <!-- Always visible: Zone -->
           <TableCell class="py-4 px-6">
             <div class="text-sm font-medium text-foreground">{{ property.zone }}</div>
           </TableCell>
           
+          <!-- Always visible: Price -->
           <TableCell class="py-4 px-6 text-right">
             <div class="text-sm font-medium text-foreground">
               {{ formatCurrency(property.price) }}
             </div>
           </TableCell>
           
+          <!-- Always visible: Status -->
           <TableCell class="py-4 px-6 text-center">
             <Badge :class="PROPERTY_STATUS_COLORS[property.status]">
               {{ t(`status.${property.status}`) }}
             </Badge>
           </TableCell>
 
-          <TableCell class="py-4 px-6 text-center">
+          <!-- Configurable: Appointment -->
+          <TableCell v-if="columnVisibility.appointment" class="py-4 px-6 text-center">
             <div v-if="property.appointmentDate" class="flex flex-col items-center gap-1">
               <div class="text-sm text-foreground">
                 {{ formatDate(property.appointmentDate) }}
@@ -251,7 +305,8 @@ function getSortIcon(field: SortField) {
             <div v-else class="text-sm text-muted-foreground">-</div>
           </TableCell>
           
-          <TableCell class="py-4 px-6 max-w-[200px]">
+          <!-- Configurable: Real Estate -->
+          <TableCell v-if="columnVisibility.realEstate" class="py-4 px-6 max-w-[200px]">
             <div
               v-if="property.realEstate"
               class="text-sm text-foreground truncate"
@@ -262,7 +317,8 @@ function getSortIcon(field: SortField) {
             <div v-else class="text-sm text-muted-foreground">-</div>
           </TableCell>
           
-          <TableCell class="py-4 px-6 max-w-[250px]">
+          <!-- Configurable: Requirements -->
+          <TableCell v-if="columnVisibility.requirements" class="py-4 px-6 max-w-[250px]">
             <div
               v-if="property.requirements && property.requirements.length > 0"
               class="text-sm text-foreground"
@@ -274,7 +330,8 @@ function getSortIcon(field: SortField) {
             <div v-else class="text-sm text-muted-foreground">-</div>
           </TableCell>
           
-          <TableCell class="py-4 px-6 max-w-[250px]">
+          <!-- Configurable: Comments -->
+          <TableCell v-if="columnVisibility.comments" class="py-4 px-6 max-w-[250px]">
             <div
               v-if="property.comments"
               class="text-sm text-foreground truncate"
@@ -285,7 +342,8 @@ function getSortIcon(field: SortField) {
             <div v-else class="text-sm text-muted-foreground">-</div>
           </TableCell>
           
-          <TableCell class="py-4 px-6">
+          <!-- Configurable: Links -->
+          <TableCell v-if="columnVisibility.links" class="py-4 px-6">
             <div class="flex justify-center space-x-2">
               <Button
                 v-if="property.link"
@@ -320,8 +378,18 @@ function getSortIcon(field: SortField) {
             </div>
           </TableCell>
           
+          <!-- Always visible: Actions -->
           <TableCell class="py-4 px-6">
-            <div class="flex justify-center space-x-2">
+            <div class="flex justify-center space-x-1">
+              <Button
+                variant="outline"
+                size="icon"
+                @click="handleViewDetails(property)"
+                :title="t('property.viewDetails')"
+                class="h-8 w-8 border-border hover:bg-muted"
+              >
+                <EyeIcon class="h-4 w-4" />
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
@@ -381,4 +449,14 @@ function getSortIcon(field: SortField) {
     <!-- Sort Modal -->
     <SortModal v-model:open="showSortModal" />
   </div>
+  
+  <!-- Column Settings Modal -->
+  <ColumnSettingsModal v-model:open="columnSettingsOpen" />
+  
+  <!-- Property View Modal -->
+  <PropertyViewModal 
+    v-model:open="showPropertyView" 
+    :property="selectedProperty"
+    @edit="handleViewModalEdit"
+  />
 </template>

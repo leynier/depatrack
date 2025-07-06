@@ -28,6 +28,17 @@ export class UserSettingsService {
       language: data.language,
       filters: data.filters,
       sort: data.sort,
+      columnVisibility: data.columnVisibility || {
+        zone: true,
+        price: true,
+        status: true,
+        actions: true,
+        appointment: true,
+        realEstate: true,
+        requirements: true,
+        comments: true,
+        links: true
+      },
       createdAt: data.createdAt.toDate(),
       updatedAt: data.updatedAt.toDate()
     };
@@ -77,6 +88,7 @@ export class UserSettingsService {
         language: settingsData.language,
         filters: settingsData.filters,
         sort: settingsData.sort,
+        columnVisibility: settingsData.columnVisibility,
         createdAt,
         updatedAt: now
       };
