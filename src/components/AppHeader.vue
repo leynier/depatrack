@@ -11,6 +11,7 @@ import AuthDialog from '@/components/AuthDialog.vue';
 import UserProfile from '@/components/UserProfile.vue';
 import LanguageSelector from '@/components/LanguageSelector.vue';
 import SyncIcon from '@/components/SyncIcon.vue';
+import DonationButton from '@/components/DonationButton.vue';
 
 const { theme, toggleTheme } = useTheme();
 const authStore = useAuthStore();
@@ -113,6 +114,7 @@ const getThemeText = () => {
         </div>
         <!-- Desktop Navigation -->
         <div class="hidden md:flex items-center gap-2">
+          <DonationButton />
           <Button
             variant="outline"
             size="icon"
@@ -161,7 +163,8 @@ const getThemeText = () => {
         </div>
 
         <!-- Mobile: Auth Section (Right Side) -->
-        <div class="md:hidden flex items-center">
+        <div class="md:hidden flex items-center gap-2">
+          <DonationButton />
           <UserProfile v-if="authStore.isAuthenticated" />
           <Button
             v-else

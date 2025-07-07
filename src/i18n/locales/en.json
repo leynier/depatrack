@@ -298,5 +298,14 @@
   },
   "table": {
     "properties": "Properties"
+  },
+  "donation": {
+    "title": "Support DepaTrack",
+    "description": "Help keep DepaTrack free and open-source",
+    "projectInfo": "About DepaTrack",
+    "projectDescription": "DepaTrack is a free, open-source property tracking application that helps you manage your apartment-rental prospects with offline support and cloud synchronization.",
+    "supportMessage": "Your support helps us maintain and improve the application, ensuring it remains free for everyone to use.",
+    "thankYou": "Thank you for considering supporting this project!",
+    "buyMeACoffee": "Buy me a coffee"
   }
 }

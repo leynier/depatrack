@@ -298,5 +298,14 @@
   },
   "table": {
     "properties": "Propiedades"
+  },
+  "donation": {
+    "title": "Apoyar DepaTrack",
+    "description": "Ayuda a mantener DepaTrack gratuito y de código abierto",
+    "projectInfo": "Acerca de DepaTrack",
+    "projectDescription": "DepaTrack es una aplicación gratuita y de código abierto para rastrear propiedades que te ayuda a gestionar tus prospectos de alquiler de apartamentos con soporte offline y sincronización en la nube.",
+    "supportMessage": "Tu apoyo nos ayuda a mantener y mejorar la aplicación, asegurando que siga siendo gratuita para todos.",
+    "thankYou": "¡Gracias por considerar apoyar este proyecto!",
+    "buyMeACoffee": "Cómprame un café"
   }
 }
